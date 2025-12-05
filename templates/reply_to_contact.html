@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Compose Reply to {{ guest_email }}</h2>
+<form method="post" id="replyForm">
+  <div class="mb-3">
+    <label class="form-label">Subject</label>
+    <input class="form-control" name="subject" value="{{ subject }}">
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Message (HTML allowed)</label>
+    <textarea class="form-control" name="body_html" id="body_html" rows="10">{{ body_html }}</textarea>
+  </div>
+  <button class="btn btn-success" type="submit">Send Email</button>
+</form>
+
+<hr>
+<h3>Live Preview</h3>
+<div id="preview" style="border:1px solid #ccc; padding:15px; background:#fafafa;">
+  {{ body_html|safe }}
+</div>
+
+<script>
+  const textarea = document.getElementById("body_html");
+  const preview = document.getElementById("preview");
+
+  textarea.addEventListener("input", () => {
+    preview.innerHTML = textarea.value;
+  });
+</script>
+{% endblock %}

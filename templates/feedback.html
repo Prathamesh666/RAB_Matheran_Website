@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<body class="feedback-page">
+<h2>Give Feedback</h2>
+
+<form method="post" action="{{ url_for('feedback') }}" enctype="multipart/form-data">
+  <div class="form-group">
+    <label class="form-label">Your name</label>
+    <input class="form-control" name="name" required>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Your email</label>
+    <input class="form-control" name="email" required>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Rating (0-10)</label>
+    <input class="form-control" name="rating" type="number" min="0" max="10" required>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Comments</label>
+    <textarea class="form-control" name="comments" rows="3"></textarea>
+  </div>
+  <!-- 📸 New photo upload option -->
+  <div class="form-group">
+    <label for="form-label">Upload Your Happy Moments To Be Featured In Our Gallery Collections (optional)</label><br>
+    <input type="file" class="form-control" id="photo" name="photos" accept="image/*" multiple>
+  </div><br>
+  <div class="form-group">
+    <center><button class="btn btn-success" type="submit">Submit Feedback</button></center>
+  </div>
+</form>
+<hr>
+<a class="btn btn-outline-secondary" href="{{ url_for('feedbacks_list') }}">View All Feedbacks</a>
+</body>
+{% endblock %}

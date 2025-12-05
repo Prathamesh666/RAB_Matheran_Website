@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block content %}
+<body class="contact-page">
+  <h2>Contact Us</h2>
+
+  <form method="post" action="{{ url_for('contact') }}">
+    <div class="mb-3">
+      <label class="form-label">Name</label>
+      <input class="form-control" name="name" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Email</label>
+      <input class="form-control" name="email" type="email" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Message</label>
+      <textarea class="form-control" name="message" rows="4" required></textarea>
+    </div>
+    <button class="btn btn-primary" type="submit">Send</button>
+  </form>
+
+  <!-- Contact Us Dropdown -->
+  <div class="btn-group mt-4">
+  <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+    📞 Contact Us
+  </button>
+  <ul class="dropdown-menu">
+    <!-- WhatsApp Booking -->
+    <li class="dropdown-header">WhatsApp</li>
+    <li>
+      <a class="dropdown-item" target="_blank" rel="noopener"
+          href="https://web.whatsapp.com/send?phone=919320642848&text=📲%20Hi%20I%27d%20like%20to%20book%20a%20stay%20at%20Shri%20Ranchoddas%20Arogya%20Bhavan">
+          🌐 Open in WhatsApp Web
+      </a>
+    </li>
+    <li>
+      <a class="dropdown-item" target="_blank" rel="noopener"
+          href="https://wa.me/919320642848?text=📲%20Hi%20I%27d%20like%20to%20book%20a%20stay%20at%20Shri%20Ranchoddas%20Arogya%20Bhavan">
+          📱 Open in WhatsApp App
+      </a>
+    </li>
+
+    <li><hr class="dropdown-divider"></li>
+
+    <!-- Email Booking Inquiry -->
+    <li class="dropdown-header">Email Booking</li>
+    <li>
+      <a class="dropdown-item" target="_blank" rel="noopener"
+          href="https://mail.google.com/mail/?view=cm&fs=1&to=p397366@gmail.com&su=Booking%20Inquiry&body=📧%20Hi,%20I%20would%20like%20to%20book%20a%20stay%20at%20Shri%20Ranchoddas%20Arogya%20Bhavan.">
+          🌐 Gmail (Web)
+      </a>
+    </li>
+    <li>
+      <a class="dropdown-item" target="_blank" rel="noopener"
+          href="https://outlook.live.com/mail/0/deeplink/compose?to=p397366@gmail.com&subject=Booking%20Inquiry&body=📧%20Hi,%20I%20would%20like%20to%20book%20a%20stay%20at%20Shri%20Ranchoddas%20Arogya%20Bhavan.">
+          🌐 Outlook (Web)
+      </a>
+    </li>
+    <li>
+      <a class="dropdown-item"
+          href="mailto:p397366@gmail.com?subject=Booking%20Inquiry&body=📧%20Hi,%20I%20would%20like%20to%20book%20a%20stay%20at%20Shri%20Ranchoddas%20Arogya%20Bhavan.">
+          📧 Default Mail App
+      </a>
+    </li>
+
+    <li><hr class="dropdown-divider"></li>
+
+    <!-- Email General Query -->
+    <li class="dropdown-header">Email Query</li>
+    <li>
+      <a class="dropdown-item" target="_blank" rel="noopener"
+          href="https://mail.google.com/mail/?view=cm&fs=1&to=p397366@gmail.com&su=General%20Query&body=❓%20Hi,%20I%20have%20a%20question%20regarding%20Shri%20Ranchoddas%20Arogya%20Bhavan.">
+          🌐 Gmail (Web)
+      </a>
+    </li>
+    <li>
+      <a class="dropdown-item" target="_blank" rel="noopener"
+          href="https://outlook.live.com/mail/0/deeplink/compose?to=p397366@gmail.com&subject=General%20Query&body=❓%20Hi,%20I%20have%20a%20question%20regarding%20Shri%20Ranchoddas%20Arogya%20Bhavan.">
+          🌐 Outlook (Web)
+      </a>
+    </li>
+    <li>
+      <a class="dropdown-item"
+          href="mailto:p397366@gmail.com?subject=General%20Query&body=❓%20Hi,%20I%20have%20a%20question%20regarding%20Shri%20Ranchoddas%20Arogya%20Bhavan.">
+          📧 Default Mail App
+      </a>
+    </li>
+  </ul>
+</div>
+
+</body>
+{% endblock %}

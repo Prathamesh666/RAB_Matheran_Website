@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<body class="feedback-page">
+<h2>Customer Feedback</h2>
+
+<table class="table table-hover">
+  <thead>
+    <tr> <th>Preference</th> <th>Name</th> <th>Rating</th> <th>Comments</th> <th>Photos</th> <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for f in feedbacks %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>{{ f.name }}</td>
+      <td>{{ f.rating }}/10</td>
+      <td>{{ f.comments }}</td>
+      <td>
+          {% if f.photos %}
+            <div class="d-flex flex-wrap">
+              {% for photo_id in f.photos %}
+                <!-- Thumbnail -->
+                <img src="{{ url_for('feedback_photo', file_id=photo_id) }}"
+                      alt="Feedback Photo"
+                      class="img-thumbnail"
+                      style="height:60px; margin:5px; cursor:pointer;"
+                      data-bs-toggle="modal"
+                      data-bs-target="#carouselModal{{ loop.index }}">
+              {% endfor %}
+            </div>
+
+            <!-- Carousel Modal -->
+            <div class="modal fade" id="carouselModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                  <div class="modal-body">
+                    <div id="carousel{{ loop.index }}" class="carousel slide" data-bs-ride="carousel">
+                      <div class="carousel-inner">
+                        {% for photo_id in f.photos %}
+                          <div class="carousel-item {% if loop.first %}active{% endif %}">
+                            <img src="{{ url_for('feedback_photo', file_id=photo_id) }}"
+                              class="d-block w-100" alt="Feedback Photo"
+                              style="max-height:500px; object-fit:contain;">
+                          </div>
+                        {% endfor %}
+                      </div>
+                      <button class="carousel-control-prev" type="button" data-bs-target="#carousel{{ loop.index }}" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon"></span>
+                      </button>
+                      <button class="carousel-control-next" type="button" data-bs-target="#carousel{{ loop.index }}" data-bs-slide="next">
+                        <span class="carousel-control-next-icon"></span>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% else %}
+            <em>No Photos</em>
+          {% endif %}
+        </td>
+      <td>
+        <form method="post" action="{{ url_for('feedback_delete', fb_id=f._id) }}" style="display:inline-block" onsubmit="return confirm('Delete feedback?');">
+          <button class="btn btn-sm btn-danger">Delete</button>
+        </form>
+        <a href="{{ url_for('feedback_edit', fb_id=f._id) }}" class="btn btn-sm btn-primary">Edit</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</body>
+{% endblock %}

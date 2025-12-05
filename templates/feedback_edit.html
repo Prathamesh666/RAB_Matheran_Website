@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<body class="feedback-page">
+<h2>Edit Feedback</h2>
+
+<form method="POST" action="{{ url_for('feedback_edit', fb_id=fb._id) }}" enctype="multipart/form-data">
+  <div class="form-group">
+    <label for="name">Name</label>
+    <input type="text" class="form-control" id="name" name="name"  value="{{ fb.name }}" required>
+  </div>
+
+  <div class="form-group">
+    <label for="email">Email</label>
+    <input type="text" class="form-control" id="email" name="email"  value="{{ fb.email }}" required>
+  </div>
+
+  <div class="form-group">
+    <label for="rating">Rating (0-10)</label>
+    <input type="number" class="form-control" id="rating" name="rating" min="0" max="10" value="{{ fb.rating }}" required>
+  </div>
+
+  <div class="form-group">
+    <label for="comments">Comments</label>
+    <textarea class="form-control" id="comments" name="comments" rows="3">{{ fb.comments }}</textarea>
+  </div>
+
+  <!-- 📸 Existing Photos -->
+  <div class="form-group">
+    <label>Existing Photos</label><br>
+    {% if fb.photos %}
+      {% for photo in fb.photos %}
+        <img src="{{ url_for('static', filename=photo) }}" alt="Feedback Photo" class="img-thumbnail" style="height:80px; margin:5px;">
+      {% endfor %}
+    {% else %}
+      <p><em>No photos uploaded</em></p>
+    {% endif %}
+  </div>
+
+  <!-- 📸 Upload New Photos -->
+  <div class="form-group">
+    <label for="photos">Upload New Photos</label>
+    <input type="file" class="form-control-file" id="photos" name="photos" accept=".jpg,.jpeg,.png,.gif" multiple>
+  </div>
+
+  <button type="submit" class="btn btn-success">Save Feedback Changes</button>
+  <a href="{{ url_for('feedbacks_list') }}" class="btn btn-secondary">Cancel</a>
+</form>
+</body>
+{% endblock %}

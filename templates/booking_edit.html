@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<body class="booking-page">
+<h2>Edit Booking</h2>
+<form method="post" action="{{ url_for('booking_edit', booking_id=booking._id) }}">
+  <div class="mb-3">
+    <label class="form-label">Full name</label>
+    <input class="form-control" name="name" value="{{ booking.name }}" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Phone</label>
+    <input class="form-control" name="phone" value="{{ booking.phone }}" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Email</label>
+    <input class="form-control" name="email" value="{{ booking.email }}" type="email">
+  </div>
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <label class="form-label">Check-in</label>
+      <input class="form-control" name="check_in" type="date" value="{{ booking.check_in }}">
+    </div>
+    <div class="col-md-6 mb-3">
+      <label class="form-label">Check-out</label>
+      <input class="form-control" name="check_out" type="date" value="{{ booking.check_out }}">
+    </div>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Guests</label>
+    <input class="form-control" name="guests" type="number" min="1" value="{{ booking.guests }}">
+  </div>
+  <div class="mb-3">
+    <label for="status">Status</label>
+    <select name="status">
+        <option value="pending" {% if booking.status == "Pending" %}selected{% endif %}>Pending</option>
+        <option value="accepted" {% if booking.status == "Accepted" %}selected{% endif %}>Accepted</option>
+        <option value="rejected" {% if booking.status == "Rejected" %}selected{% endif %}>Rejected</option>
+    </select>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Note</label>
+    <textarea class="form-control" name="note" rows="3">{{ booking.note }}</textarea>
+  </div>
+  <button class="btn btn-primary" type="submit">Update Booking</button>
+  <a href="{{ url_for('bookings_list') }}" class="btn btn-secondary">Cancel</a>
+</form>
+</body>
+{% endblock %}

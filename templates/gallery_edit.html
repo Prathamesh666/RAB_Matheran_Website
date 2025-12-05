@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<body class="gallery-page">
+<h2>Admin Gallery Management</h2>
+
+<!-- Add Category -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="POST">
+      <input type="hidden" name="action" value="add_category">
+      <div class="row g-2">
+        <div class="col-md-4">
+          <input type="text" name="title" class="form-control" placeholder="Category Title" required>
+        </div>
+        <div class="col-md-4">
+          <input type="text" name="key" class="form-control" placeholder="Category Key" required>
+        </div>
+        <div class="col-md-4">
+          <button class="btn btn-success w-100">Add Category</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row">
+  {% for c in categories %}
+  <div class="col-md-6 mb-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <h5 class="card-title">{{ c.title }}</h5>
+        <p class="card-text"><small class="text-muted">{{ c.images|length }} photos</small></p>
+
+        <!-- Delete Category -->
+        <form method="POST" class="mb-3">
+          <input type="hidden" name="action" value="delete_category">
+          <input type="hidden" name="category_id" value="{{ c._id }}">
+          <button class="btn btn-sm btn-danger">Delete Category</button>
+        </form>
+
+        <!-- Upload Image -->
+        <form method="POST" enctype="multipart/form-data" class="mb-3">
+          <input type="hidden" name="action" value="add_image">
+          <input type="hidden" name="category_id" value="{{ c._id }}">
+          <div class="row g-2">
+            <div class="col-md-8">
+              <input type="file" name="file" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <button class="btn btn-sm btn-success w-100">Upload Image</button>
+            </div>
+          </div>
+        </form>
+
+        <!-- Existing Images -->
+        <h6>Images:</h6>
+        <ul class="list-group list-group-flush">
+          {% for img in c.images %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('static', filename='images/' + img) }}" target="_blank">{{ img }}</a>
+            <form method="POST" style="margin:0;">
+              <input type="hidden" name="action" value="delete_image">
+              <input type="hidden" name="category_id" value="{{ c._id }}">
+              <input type="hidden" name="filename" value="{{ img }}">
+              <button class="btn btn-sm btn-outline-danger">Delete</button>
+            </form>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+</body>
+{% endblock %}

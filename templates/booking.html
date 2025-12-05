@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<body class="booking-page">
+<h2>Book a Room</h2>
+<form method="post" action="{{ url_for('booking') }}">
+  <div class="mb-3">
+    <label class="form-label">Full name</label>
+    <input class="form-control" name="name" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Phone</label>
+    <input class="form-control" name="phone" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Email</label>
+    <input class="form-control" name="email" type="email">
+  </div>
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <label class="form-label">Check-in</label>
+      <input class="form-control" name="check_in" type="date" required>
+    </div>
+    <div class="col-md-6 mb-3">
+      <label class="form-label">Check-out</label>
+      <input class="form-control" name="check_out" type="date" required>
+    </div>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Guests</label>
+    <input class="form-control" name="guests" type="number" min="1" value="1">
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Note</label>
+    <textarea class="form-control" name="note" rows="3"></textarea>
+  </div>
+  <div class="mb-3">
+    <small class="text-muted"><b>AC facility not available.</b></small>
+  </div>
+  <button class="btn btn-success" type="submit">Submit Booking</button>
+</form>
+{% endblock %}

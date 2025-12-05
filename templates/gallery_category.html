@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+<body class="gallery-page">
+<h2>{{ title }}</h2>
+
+<div class="row">
+  {% for img in images %}
+  <div class="col-md-4 mb-3">
+    <div class="card">
+      <!-- Thumbnail triggers modal -->
+      <img src="{{ url_for('static', filename='images/thumbs/' + img) }}"
+          data-src="{{ url_for('static', filename='images/' + img) }}"
+          class="card-img-top lazy"
+          alt="{{ img }}"
+          data-bs-toggle="modal"
+          data-bs-target="#imageModal"
+          data-full="{{ url_for('static', filename='images/' + img) }}">
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Pagination / Show more -->
+<div class="d-flex justify-content-center mt-3">
+  {% if page < pages %}
+    <a class="btn btn-primary" href="{{ url_for('gallery_category', category=category, page=page+1) }}">Show more</a>
+  {% else %}
+    <span class="text-muted">End of {{ title }}</span>
+  {% endif %}
+</div>
+
+<!-- Bootstrap Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center">
+        <img id="modalImage" src="" class="img-fluid rounded">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lazy loading + modal script -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  // Lazy load images
+  const lazyImages = [].slice.call(document.querySelectorAll("img.lazy"));
+  if ("IntersectionObserver" in window) {
+    let lazyObserver = new IntersectionObserver(function(entries, observer) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          let img = entry.target;
+          img.src = img.dataset.src;
+          img.classList.remove("lazy");
+          lazyObserver.unobserve(img);
+        }
+      });
+    });
+    lazyImages.forEach(function(img) { lazyObserver.observe(img); });
+  } else {
+    lazyImages.forEach(function(img) { img.src = img.dataset.src; });
+  }
+
+  // Modal image handler
+  const modalImage = document.getElementById("modalImage");
+  document.querySelectorAll("[data-bs-target='#imageModal']").forEach(img => {
+    img.addEventListener("click", function() {
+      modalImage.src = this.getAttribute("data-full");
+    });
+  });
+});
+</script>
+</body>
+{% endblock %}

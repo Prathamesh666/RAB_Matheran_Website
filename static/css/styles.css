@@ -1,0 +1,252 @@
+html {
+  height: 100%;
+  overflow-y: scroll;
+}
+body {
+      margin: 0;
+      height: 100vh;
+      /* background: linear-gradient(#F5F5DC, #87CEEB);  cream to sky blue */
+    }
+
+    body.home-page {
+      background: url('/static/images/icons/Home_Page.png') center/cover no-repeat fixed;
+      min-height: 100vh; /* ensures full screen coverage */
+      color: white;      /* optional: improves text readability */
+      position: relative;
+    }
+
+    body.home-page::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      /*background: rgba(0.1,0.1,0.1,0.1); /* overlay for readability */
+      z-index: -1;
+    }
+
+    body.about-page {
+      background: url('/static/images/icons/About_Page.png') center/cover no-repeat fixed;
+      min-height: 100vh; /* ensures full screen coverage */
+      color: white;      /* optional: improves text readability */
+      position: relative;
+    }
+
+    body.contact-page {
+      background: url('/static/images/icons/Contact_Page.png') center/cover no-repeat fixed;
+      min-height: auto; /* ensures full screen coverage */
+      color: white;      /* optional: improves text readability */
+      position: relative;
+    }
+
+    body.booking-page {
+      /*background: url('/static/images/icons/Book_Online_Page.png') cover no-repeat fixed;*/
+      background: url('/static/images/icons/Book_Online_Page.png') no-repeat top center fixed;
+      background-size: cover;
+      min-height: 100%; /* ensures full screen coverage */
+      color: white;      /* optional: improves text readability */
+      position: relative;
+    }
+
+    .feedback-page {
+      background: url('/static/images/icons/Onetreehill.png') no-repeat top center fixed;
+      background-size: cover;
+      min-height: 100vh; /* ensures full screen coverage */
+      color: white;      /* optional: improves text readability */
+      position: relative;
+    }
+
+    .login-page {
+      background: url('/static/images/icons/Login_Page.png') no-repeat fixed;
+      background-size: cover;
+      min-height: 100vh; /* ensures full screen coverage */
+      color: white;      /* optional: improves text readability */
+      position: relative;
+    }
+
+    .gallery-page {
+      background: url('/static/images/icons/Gallery_Page.png'), url('/static/images/icons/Gallery2_Page.png') fixed;
+      background-position: bottom center, center;
+      background-size: cover, contain;
+      background-color: rgba(4, 248, 37, 0.356);
+      background-repeat: no-repeat, no-repeat;
+      background-attachment: fixed, fixed;
+      background-blend-mode: screen, multiply;
+      
+      min-height: 100vh, 100vh; /* ensures full screen coverage */
+      color: white;      /* optional: improves text readability */
+      position: relative;
+    }
+
+    .Map {
+    width: 99%;
+    max-width: 600px;
+    height: auto;
+    border-radius: 9px; /* optional styling */
+    }
+
+    .leaf {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: #2E4D38; /* forest green */
+      border-radius: 50% 50% 50% 0; /* leaf-like shape */
+      opacity: 0.6;
+      animation: fall 10s linear infinite;
+    }
+
+    /* Falling animation */
+    @keyframes fall {
+      0% {
+        transform: translateY(-10%) rotate(0deg);
+        opacity: 0.8;
+      }
+      50% {
+        transform: translateY(50vh) rotate(180deg);
+        opacity: 0.6;
+      }
+      100% {
+        transform: translateY(110vh) rotate(360deg);
+        opacity: 0.4;
+      }
+    }
+
+    /* Different positions and delays for variety */
+    .leaf:nth-child(1) { left: 10%; animation-delay: 0s; }
+    .leaf:nth-child(2) { left: 30%; animation-delay: 2s; }
+    .leaf:nth-child(3) { left: 50%; animation-delay: 4s; }
+    .leaf:nth-child(4) { left: 70%; animation-delay: 6s; }
+    .leaf:nth-child(5) { left: 90%; animation-delay: 8s; }
+
+/* Global Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Header / Hero Section */
+header {
+  background: linear-gradient(rgba(46,77,56,0.7), rgba(46,77,56,0.7)),
+              url('hero-image.jpg') center/cover no-repeat;
+  color: #fff;
+  text-align: center;
+  padding: 80px 20px;
+}
+
+header h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+header p {
+  font-size: 1.2rem;
+  font-style: italic;
+}
+
+/* Navigation */
+nav {
+  background: url('static\images\icons\Header.png');
+  min-height: auto;
+  background-color: #D2691E; /* Terracotta */
+  padding: 10px;
+  text-align: center;
+}
+
+nav a {
+  color: #fff;
+  text-decoration: none;
+  margin: 0 15px;
+  font-weight: bold;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+.nav-icon {
+  width: 50px;   /* adjust width */
+  height: 50px;  /* adjust height */
+  margin-right: 8px; /* spacing between icon and text */
+  vertical-align: middle;
+}
+
+.navbar-brick {
+  position: relative;
+  background: url('/static/images/icons/Header.png') center/cover no-repeat;
+  background-attachment: fixed;
+}
+
+/* Optional overlay for readability */
+.navbar-brick::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.0.4); /* dark overlay */
+  z-index: -1;
+}
+
+.navbar-brick .nav-link,
+.navbar-brick .navbar-brand {
+  color: #fff; /* ensure text is readable */
+}
+
+/* Section Styling */
+section {
+  padding: 40px 20px;
+  max-width: 1200px;
+  margin: auto;
+}
+
+section h2 {
+  font-family: 'Playfair Display', serif;
+  color: #2E4D38;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Facilities Cards */
+.facilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  padding: 20px;
+  flex: 1 1 250px;
+  text-align: center;
+}
+
+.card h3 {
+  color: #D2691E;
+  margin-bottom: 10px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  background-color: #71d61e;
+  color: #fff;
+  padding: 12px 25px;
+  border-radius: 5px;
+  text-decoration: none;
+  transition: background 0.3s ease;
+}
+
+.btn:hover {
+  background-color: #87CEEB; /* Sky Blue */
+  color: #2E4D38;
+}
+
+/* Footer */
+footer {
+  background-color: #2E4D38;
+  color: #fff;
+  text-align: center;
+  padding: 20px;
+  font-size: 1rem;
+}

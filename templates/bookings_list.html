@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<body class="booking-page">
+<h2>Bookings</h2>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Preference</th><th>Name</th><th>Phone</th><th>Check-in</th><th>Check-out</th><th>Guests</th><th>Status</th><th><center>Actions</center></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for b in bookings %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>{{ b.name }}</td>
+      <td>{{ b.phone }}</td>
+      <td>{{ b.check_in }}</td>
+      <td>{{ b.check_out }}</td>
+      <td>{{ b.guests }}</td>
+      <td>{{ b.status }}</td>
+      <td>
+        {% if b.status == "Pending" or b.status == "Rejected" %}
+          <form method="post" action="{{ url_for('booking_accept', booking_id=b._id) }}" style="display:inline-block" onsubmit="return confirm('Accept booking?');">
+            <button class="btn btn-success btn-sm">Accept</button>
+          </form>
+        {% endif %}
+        {% if b.status == "Pending" or b.status == "Accepted" %}
+          <form method="post" action="{{ url_for('booking_reject', booking_id=b._id) }}" style="display:inline-block" onsubmit="return confirm('Reject booking?');">
+            <button class="btn btn-danger btn-sm">Reject</button>
+          </form>
+        {% endif %}
+        <a class="btn btn-sm btn-primary" href="{{ url_for('booking_edit', booking_id=b._id) }}">Edit</a>
+        <form method="post" action="{{ url_for('booking_delete', booking_id=b._id) }}" style="display:inline-block" onsubmit="return confirm('Delete booking?');">
+          <button class="btn btn-sm btn-danger">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</body>
+{% endblock %}

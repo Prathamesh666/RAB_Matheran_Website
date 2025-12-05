@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "package.json", "use": "@vercel/node" },
+    { "src": "static/**", "use": "@vercel/static" },
+    { "src": "templates/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "https://ranchoddas-backend.onrender.com/api/$1" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}

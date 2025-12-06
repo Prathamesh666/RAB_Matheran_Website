@@ -10,6 +10,8 @@ import smtplib
 from email.message import EmailMessage
 from werkzeug.utils import secure_filename
 import gridfs
+from Email_Notification import *
+import base64
 
 app = Flask(__name__)
 app.config["MONGO_URI"] = config.MONGO_URI
@@ -226,57 +228,105 @@ def booking():
         
         # Optional email creation for guest
         def booking_pending(email, name, booking_id, check_in, check_out):
-            if config.SMTP_HOST and email:
+            subject = "Booking Created - Shri Ranchoddas Hindu Arogya Bhavan"
+            plain_body = (
+                f"Dear {name},\n\nYour booking (ID: {booking_id}) is generated in the system and is currently pending acceptance "
+                f"for {check_in} to {check_out} at Shri Ranchoddas Hindu Arogya Bhavan Guest House.\n\n"
+                f"Kindly wait for further confirmation mail.\n\nThanks for your cooperation\n\n"
+                f"Regards,\nShri Ranchoddas Hindu Arogya Bhavan From Matheran Hill Station"
+            )
+        
+            html_body = f"""
+            <html>
+            <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px; color: #333; }}
+                .card {{ background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }}
+                .logo {{ text-align: center; margin-bottom: 20px; }}
+                .logo img {{ max-width: 180px; height: auto; border-radius: 8px; }}
+                h2 {{ color: #0b8a61; }}
+            </style>
+            </head>
+            <body>
+            <div class="card">
+                <div class="logo">
+                <img src="cid:RAG_Logo" alt="Ranchoddas Arogya Bhavan Logo" />
+                </div>
+                <p>Dear {name},</p>
+                <p>Your booking (ID: {booking_id}) is generated in the system and is currently pending acceptance
+                for Check-In: {check_in} to Check-Out: {check_out} at Shri Ranchoddas Hindu Arogya Bhavan Guest House.</p>
+                <p>Kindly wait for further confirmation mail.</p>
+                <p>Thanks for your cooperation.</p>
+                <p>Regards,<br>Shri Ranchoddas Hindu Arogya Bhavan<br>From Matheran Hill Station</p>
+            </div>
+            </body>
+            </html>
+            """
+
+            logo_path = "static/images/icons/RAG_Logo.png"
+            logo_data = None
+            if os.path.exists(logo_path):
+                with open(logo_path, "rb") as img:
+                    logo_data = base64.b64encode(img.read()).decode()
+
+            sender_key = os.getenv("SENDER_API_KEY")
+
+            if sender_key:
+                # --- Production: Sender API ---
+                payload = {
+                    "from": {"email": os.getenv("ADMIN_EMAIL"), "name": "Ranchoddas Bhavan"},
+                    "to": [{"email": email}],
+                    "subject": subject,
+                    "html": html_body,
+                    "text": plain_body
+                }
+                if logo_data:
+                    payload["attachments"] = [{
+                        "content": logo_data,
+                        "type": "image/png",
+                        "filename": "RAG_Logo.png",
+                        "disposition": "inline",
+                        "cid": "RAG_Logo"
+                    }]
+                try:
+                    response = requests.post(
+                        "https://api.sender.net/v2/email",
+                        headers={
+                            "Authorization": f"Bearer {sender_key}",
+                            "Content-Type": "application/json"
+                        },
+                        json=payload
+                    )
+                    if response.status_code in (200, 202):
+                        print("✅ Booking pending email sent via Sender API")
+                    else:
+                        print("❌ Failed via Sender:", response.status_code, response.text)
+                except Exception as e:
+                    print("❌ Exception via Sender:", e)
+
+            else:
+                # --- Local: SMTP ---
                 try:
                     msg = EmailMessage()
-                    msg["Subject"] = "Booking Created - Shri Ranchoddas Hindu Arogya Bhavan"
-                    msg["From"] = config.SMTP_USER
+                    msg["Subject"] = subject
+                    msg["From"] = os.getenv("SMTP_USER")
                     msg["To"] = email
-                    msg.set_content(
-                        f"Dear {name},\n\nYour booking (ID: {booking_id}) is generated in the system and is currently pending acceptance "
-                        f"for {check_in} to {check_out} at Shri Ranchoddas Hindu Arogya Bhavan Guest House.\n\n"
-                        f"Kindly wait for futher confirmation mail.\n\nThanks for your cooperation\n\n"
-                        f"Regards,\nShri Ranchoddas Hindu Arogya Bhavan From Matheran Hill Station"
-                    )
-                    html_body = f"""
-                    <html>
-                    <head>
-                    <style>
-                        body {{ font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px; color: #333; }}
-                        .card {{ background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }}
-                        .logo {{ text-align: center; margin-bottom: 20px; }}
-                        .logo img {{ max-width: 180px; height: auto; border-radius: 8px; }}
-                        h2 {{ color: #0b8a61; }}
-                    </style>
-                    </head>
-                    <body>
-                    <div class="card">
-                        <div class="logo">
-                        <img src="cid:RAG_Logo" alt="Ranchoddas Arogya Bhavan Logo" />
-                        </div>
-                        <p>Dear { name },</p>
-                        <p>Your booking (ID: { booking_id }) is generated in the system and is currently pending acceptance
-                        for Check-In: { check_in } to Check-Out: { check_out } at Shri Ranchoddas Hindu Arogya Bhavan Guest House.
-                        </p>
-                        <p>Kindly wait for further confirmation mail.</p>
-                        <p>Thanks for your cooperation.</p>
-                        <p>Regards,<br>Shri Ranchoddas Hindu Arogya Bhavan<br>From Matheran Hill Station</p>
-                    </div>
-                    </body>
-                    </html>
-                    """
+                    msg.set_content(plain_body)
                     msg.add_alternative(html_body, subtype="html")
-                    # Attach logo image inline
-                    with open("static/images/icons/RAG_Logo.png", "rb") as img:
-                        msg.get_payload()[1].add_related(img.read(), maintype="image", subtype="png", cid="RAG_Logo") # type: ignore
-                    
-                    with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server:
+        
+                    if logo_data:
+                        msg.get_payload()[1].add_related(
+                            base64.b64decode(logo_data), maintype="image", subtype="png", cid="RAG_Logo"
+                        )
+
+                    with smtplib.SMTP(os.getenv("SMTP_HOST"), int(os.getenv("SMTP_PORT"))) as server:
                         server.starttls()
-                        if config.SMTP_USER is not None and config.SMTP_PASS is not None:
-                            server.login(config.SMTP_USER, config.SMTP_PASS)
+                        if os.getenv("SMTP_USER") and os.getenv("SMTP_PASS"):
+                            server.login(os.getenv("SMTP_USER"), os.getenv("SMTP_PASS"))
                         server.send_message(msg)
-                except Exception:
-                    app.logger.exception("Failed to send creation email")
+                    print("✅ Booking pending email sent via SMTP")
+                except Exception as e:
+                    print("❌ Failed via SMTP:", e)
                     
         booking_pending(email, name, booking_id, check_in, check_out)
 
@@ -390,7 +440,8 @@ def booking_accept(booking_id):
     check_in = booking.get("check_in")
     check_out = booking.get("check_out")
     booking_id = str(booking["_id"])
-
+    
+    # Booking Confirmation mail to guest
     if config.SMTP_HOST and email:
         try:
             msg = EmailMessage()
@@ -460,7 +511,8 @@ def booking_reject(booking_id):
     check_in = booking.get("check_in")
     check_out = booking.get("check_out")
     booking_id = str(booking["_id"])
-
+    
+    # Booking Rejection mail to guests
     if config.SMTP_HOST and email:
         try:
             msg = EmailMessage()
@@ -604,7 +656,7 @@ def feedback():
             "created_at": datetime.now(timezone.utc)
         })
         
-        # Notify Thanks for the feedback
+        # Notify Thanks email for the feedback to guests
         if config.SMTP_HOST and email:
             try:
                 msg = EmailMessage()
@@ -745,7 +797,7 @@ def contact():
             "created_at": datetime.now(timezone.utc)
         })
         
-        # 🔔 Notify admin by email with logo and reply buttons
+        # 🔔 Contact form submittion alert Notify admin by email with logo and reply buttons
         if config.SMTP_HOST and getattr(config, "ADMIN_EMAIL", None):
             try:
                 admin_msg = EmailMessage()

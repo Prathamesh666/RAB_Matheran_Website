@@ -9,4 +9,4 @@ services:
       - key: MONGO_URI
         value: "mongodb+srv://PrathameshBhurke:Prathameshbhurke666@cluster0.ozajm.mongodb.net/hotel_db?retryWrites=true&w=majority&appName=Cluster0"
       - key: SECRET_KEY
-        value: "your-secret-key"
+        value: "721674669d7881612f8da95522a85c45ca6f377ad87f242f647d591897f4c115"

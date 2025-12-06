@@ -3,7 +3,6 @@ from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
 from datetime import datetime, timezone
 import config, os
-from config import *
 from werkzeug.security import check_password_hash
 from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin
 import smtplib
@@ -14,8 +13,8 @@ from Email_Notification import *
 import base64
 
 app = Flask(__name__)
-app.config["MONGO_URI"] = config.MONGO_URI
-app.config["SECRET_KEY"] = config.SECRET_KEY
+app.config["MONGO_URI"] = config.MONGO_URI # type: ignore
+app.config["SECRET_KEY"] = config.SECRET_KEY # type: ignore
 
 mongo = PyMongo(app)
 db = mongo.db  # Ensure this line comes after app is fully configured
@@ -315,15 +314,15 @@ def booking():
                     msg.add_alternative(html_body, subtype="html")
         
                     if logo_data:
-                        msg.get_payload()[1].add_related(
+                        msg.get_payload()[1].add_related( # type: ignore
                             base64.b64decode(logo_data), maintype="image", subtype="png", cid="RAG_Logo"
                         )
 
-                    with smtplib.SMTP(os.getenv("SMTP_HOST"), int(os.getenv("SMTP_PORT"))) as server:
+                    with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server: # type: ignore
                         server.starttls()
-                        if os.getenv("SMTP_USER") and os.getenv("SMTP_PASS"):
-                            server.login(os.getenv("SMTP_USER"), os.getenv("SMTP_PASS"))
-                        server.send_message(msg)
+                        if config.SMTP_USER is not None and config.SMTP_PASS is not None: # type: ignore
+                            server.login(config.SMTP_USER, config.SMTP_PASS) # type: ignore
+                            server.send_message(msg)
                     print("✅ Booking pending email sent via SMTP")
                 except Exception as e:
                     print("❌ Failed via SMTP:", e)
@@ -331,12 +330,12 @@ def booking():
         booking_pending(email, name, booking_id, check_in, check_out)
 
         # 🔔 Notify admin by email
-        if config.SMTP_HOST and getattr(config, "ADMIN_EMAIL", None):
+        if config.SMTP_HOST and getattr(config, "ADMIN_EMAIL", None): # type: ignore
             try:
                 admin_msg = EmailMessage()
                 admin_msg["Subject"] = f"New Booking Alert - ID {booking_id}"
-                admin_msg["From"] = config.SMTP_USER
-                admin_msg["To"] = config.ADMIN_EMAIL
+                admin_msg["From"] = config.SMTP_USER # type: ignore
+                admin_msg["To"] = config.ADMIN_EMAIL # type: ignore
                 admin_msg.set_content(
                     f"A new booking has been created.\n\n"
                     f"Booking ID: {booking_id}\n"
@@ -385,10 +384,10 @@ def booking():
                 with open("static/images/icons/RAG_Logo.png", "rb") as img:
                     admin_msg.get_payload()[1].add_related(img.read(), maintype="image", subtype="png", cid="RAG_Logo") # type: ignore
                     
-                with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server:
+                with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server: # type: ignore
                     server.starttls()
-                    if config.SMTP_USER is not None and config.SMTP_PASS is not None:
-                        server.login(config.SMTP_USER, config.SMTP_PASS)
+                    if config.SMTP_USER is not None and config.SMTP_PASS is not None: # type: ignore
+                        server.login(config.SMTP_USER, config.SMTP_PASS) # type: ignore
                     server.send_message(admin_msg)
             except Exception:
                 app.logger.exception("Failed to send admin notification email")
@@ -397,7 +396,7 @@ def booking():
         if getattr(config, "TWILIO_SID", None) and getattr(config, "ADMIN_PHONE", None):
             try:
                 from twilio.rest import Client
-                client = Client(config.TWILIO_SID, config.TWILIO_AUTH_TOKEN)
+                client = Client(config.TWILIO_SID, config.TWILIO_AUTH_TOKEN) # type: ignore
                 client.messages.create(
                     body=f"Dear Admin You Have A New Booking Alert.\n\n"
                     f"Booking ID: {booking_id}\n"
@@ -408,8 +407,8 @@ def booking():
                     f"Guests: {guests}\n"
                     f"Note: {note}\n\n"
                     f"Please check the bookings list on the website to update the status.",
-                    from_=config.TWILIO_PHONE,
-                    to=config.ADMIN_PHONE if config.ADMIN_PHONE is not None else ""
+                    from_=config.TWILIO_PHONE, # type: ignore
+                    to=config.ADMIN_PHONE if config.ADMIN_PHONE is not None else "" # type: ignore
                 )
             except Exception:
                 app.logger.exception("Failed to send SMS notification")
@@ -442,11 +441,11 @@ def booking_accept(booking_id):
     booking_id = str(booking["_id"])
     
     # Booking Confirmation mail to guest
-    if config.SMTP_HOST and email:
+    if config.SMTP_HOST and email: # type: ignore
         try:
             msg = EmailMessage()
             msg["Subject"] = "Booking Confirmation - Shri Ranchoddas Hindu Arogya Bhavan"
-            msg["From"] = config.SMTP_USER
+            msg["From"] = config.SMTP_USER # type: ignore
             msg["To"] = email
             msg.set_content(
                 f"Dear {name},\n\nYour booking (ID: {booking_id}) has been accepted "
@@ -485,10 +484,10 @@ def booking_accept(booking_id):
             with open("static/images/icons/RAG_Logo.png", "rb") as img:
                 msg.get_payload()[1].add_related(img.read(), maintype="image", subtype="png", cid="RAG_Logo") # type: ignore
             
-            with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server:
+            with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server: # type: ignore
                 server.starttls()
-                if config.SMTP_USER is not None and config.SMTP_PASS is not None:
-                            server.login(config.SMTP_USER, config.SMTP_PASS)
+                if config.SMTP_USER is not None and config.SMTP_PASS is not None: # type: ignore
+                            server.login(config.SMTP_USER, config.SMTP_PASS) # type: ignore
                 server.send_message(msg)
         except Exception:
             app.logger.exception("Failed to send confirmation email")
@@ -513,11 +512,11 @@ def booking_reject(booking_id):
     booking_id = str(booking["_id"])
     
     # Booking Rejection mail to guests
-    if config.SMTP_HOST and email:
+    if config.SMTP_HOST and email: # type: ignore
         try:
             msg = EmailMessage()
             msg["Subject"] = "Booking Update - Shri Ranchoddas Hindu Arogya Bhavan"
-            msg["From"] = config.SMTP_USER
+            msg["From"] = config.SMTP_USER # type: ignore
             msg["To"] = email
             msg.set_content(
                 f"Dear {name},\n\nWe regret to inform you that your booking (ID: {booking_id}) hs been rejected "
@@ -556,10 +555,10 @@ def booking_reject(booking_id):
             with open("static/images/icons/RAG_Logo.png", "rb") as img:
                 msg.get_payload()[1].add_related(img.read(), maintype="image", subtype="png", cid="RAG_Logo") # type: ignore
                     
-            with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server:
+            with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server: # type: ignore
                 server.starttls()
-                if config.SMTP_USER is not None and config.SMTP_PASS is not None:
-                    server.login(config.SMTP_USER, config.SMTP_PASS)
+                if config.SMTP_USER is not None and config.SMTP_PASS is not None: # type: ignore
+                    server.login(config.SMTP_USER, config.SMTP_PASS) # type: ignore
                 server.send_message(msg)
         except Exception:
             app.logger.exception("Failed to send rejection email")
@@ -657,11 +656,11 @@ def feedback():
         })
         
         # Notify Thanks email for the feedback to guests
-        if config.SMTP_HOST and email:
+        if config.SMTP_HOST and email: # type: ignore
             try:
                 msg = EmailMessage()
                 msg["Subject"] = "Feedback Response - Shri Ranchoddas Hindu Arogya Bhavan"
-                msg["From"] = config.SMTP_USER
+                msg["From"] = config.SMTP_USER # type: ignore
                 msg["To"] = email
                 msg.set_content(
                 f"Dear {name},\n\nThank you for your feedback\n\n"
@@ -699,10 +698,10 @@ def feedback():
                 with open("static/images/icons/RAG_Logo.png", "rb") as img:
                     msg.get_payload()[1].add_related(img.read(), maintype="image", subtype="png", cid="RAG_Logo") # type: ignore
                     
-                with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server:
+                with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server: # type: ignore
                     server.starttls()
-                    if config.SMTP_USER is not None and config.SMTP_PASS is not None:
-                        server.login(config.SMTP_USER, config.SMTP_PASS)
+                    if config.SMTP_USER is not None and config.SMTP_PASS is not None: # type: ignore
+                        server.login(config.SMTP_USER, config.SMTP_PASS) # type: ignore
                     server.send_message(msg)
             except Exception:
                 app.logger.exception("Failed to send return feedback email")
@@ -798,12 +797,12 @@ def contact():
         })
         
         # 🔔 Contact form submittion alert Notify admin by email with logo and reply buttons
-        if config.SMTP_HOST and getattr(config, "ADMIN_EMAIL", None):
+        if config.SMTP_HOST and getattr(config, "ADMIN_EMAIL", None): # type: ignore
             try:
                 admin_msg = EmailMessage()
                 admin_msg["Subject"] = f"New Contact Form Submission from {name}"
-                admin_msg["From"] = config.SMTP_USER
-                admin_msg["To"] = config.ADMIN_EMAIL
+                admin_msg["From"] = config.SMTP_USER # type: ignore
+                admin_msg["To"] = config.ADMIN_EMAIL # type: ignore
                 admin_msg["Reply-To"] = email
                 # Plain text fallback
                 admin_msg.set_content(f"New contact form submission from {name} ({email}):\n\n{message}")
@@ -849,10 +848,10 @@ def contact():
                     admin_msg.get_payload()[1].add_related(img.read(), maintype="image", subtype="png", cid="RAG_Logo") # type: ignore
 
                 # Send email    
-                with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server:
+                with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server: # type: ignore
                         server.starttls()
-                        if config.SMTP_USER is not None and config.SMTP_PASS is not None:
-                            server.login(config.SMTP_USER, config.SMTP_PASS)
+                        if config.SMTP_USER is not None and config.SMTP_PASS is not None: # type: ignore
+                            server.login(config.SMTP_USER, config.SMTP_PASS) # type: ignore
                         server.send_message(admin_msg)
 
                 app.logger.info("Admin notification email sent successfully.")
@@ -867,7 +866,7 @@ def contact():
 def send_html_reply(to_email, subject, body_html):
     msg = EmailMessage()
     msg["Subject"] = subject
-    msg["From"] = config.SMTP_USER
+    msg["From"] = config.SMTP_USER # type: ignore
     msg["To"] = to_email
 
     msg.set_content(f"Dear visitor, From Ranchoddas Arogya Bhavan. This is an HTML email. Please view in a modern client.")
@@ -877,10 +876,10 @@ def send_html_reply(to_email, subject, body_html):
     with open("static/images/icons/RAG_Logo.png", "rb") as img:
         msg.get_payload()[1].add_related(img.read(), maintype="image", subtype="png", cid="RAG_Logo") # type: ignore
 
-    with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server:
+    with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server: # type: ignore
         server.starttls()
-        if config.SMTP_USER is not None and config.SMTP_PASS is not None:
-            server.login(config.SMTP_USER, config.SMTP_PASS)
+        if config.SMTP_USER is not None and config.SMTP_PASS is not None: # type: ignore
+            server.login(config.SMTP_USER, config.SMTP_PASS) # type: ignore
         server.send_message(msg)
 
 @app.route("/reply/<reply_type>/<guest_email>", methods=["GET", "POST"])

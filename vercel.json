@@ -6,7 +6,7 @@
     { "src": "templates/**", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "https://ranchoddas-backend.onrender.com/api/$1" },
+    { "src": "/api/(.*)", "dest": "https://ranchoddasbhavan-backend.onrender.com/api/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }

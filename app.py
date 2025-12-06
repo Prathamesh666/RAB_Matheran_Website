@@ -2,7 +2,8 @@ from flask import Flask, render_template, request, redirect, url_for, flash, abo
 from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
 from datetime import datetime, timezone
-import config
+import config, os
+from config import *
 from werkzeug.security import check_password_hash
 from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin
 import smtplib
@@ -271,7 +272,8 @@ def booking():
                     
                     with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server:
                         server.starttls()
-                        server.login(config.SMTP_USER, config.SMTP_PASS)
+                        if config.SMTP_USER is not None and config.SMTP_PASS is not None:
+                            server.login(config.SMTP_USER, config.SMTP_PASS)
                         server.send_message(msg)
                 except Exception:
                     app.logger.exception("Failed to send creation email")
@@ -335,7 +337,8 @@ def booking():
                     
                 with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server:
                     server.starttls()
-                    server.login(config.SMTP_USER, config.SMTP_PASS)
+                    if config.SMTP_USER is not None and config.SMTP_PASS is not None:
+                        server.login(config.SMTP_USER, config.SMTP_PASS)
                     server.send_message(admin_msg)
             except Exception:
                 app.logger.exception("Failed to send admin notification email")
@@ -356,7 +359,7 @@ def booking():
                     f"Note: {note}\n\n"
                     f"Please check the bookings list on the website to update the status.",
                     from_=config.TWILIO_PHONE,
-                    to=config.ADMIN_PHONE
+                    to=config.ADMIN_PHONE if config.ADMIN_PHONE is not None else ""
                 )
             except Exception:
                 app.logger.exception("Failed to send SMS notification")
@@ -433,7 +436,8 @@ def booking_accept(booking_id):
             
             with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server:
                 server.starttls()
-                server.login(config.SMTP_USER, config.SMTP_PASS)
+                if config.SMTP_USER is not None and config.SMTP_PASS is not None:
+                            server.login(config.SMTP_USER, config.SMTP_PASS)
                 server.send_message(msg)
         except Exception:
             app.logger.exception("Failed to send confirmation email")
@@ -502,7 +506,8 @@ def booking_reject(booking_id):
                     
             with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server:
                 server.starttls()
-                server.login(config.SMTP_USER, config.SMTP_PASS)
+                if config.SMTP_USER is not None and config.SMTP_PASS is not None:
+                    server.login(config.SMTP_USER, config.SMTP_PASS)
                 server.send_message(msg)
         except Exception:
             app.logger.exception("Failed to send rejection email")
@@ -644,7 +649,8 @@ def feedback():
                     
                 with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server:
                     server.starttls()
-                    server.login(config.SMTP_USER, config.SMTP_PASS)
+                    if config.SMTP_USER is not None and config.SMTP_PASS is not None:
+                        server.login(config.SMTP_USER, config.SMTP_PASS)
                     server.send_message(msg)
             except Exception:
                 app.logger.exception("Failed to send return feedback email")
@@ -793,7 +799,8 @@ def contact():
                 # Send email    
                 with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server:
                         server.starttls()
-                        server.login(config.SMTP_USER, config.SMTP_PASS)
+                        if config.SMTP_USER is not None and config.SMTP_PASS is not None:
+                            server.login(config.SMTP_USER, config.SMTP_PASS)
                         server.send_message(admin_msg)
 
                 app.logger.info("Admin notification email sent successfully.")
@@ -820,7 +827,8 @@ def send_html_reply(to_email, subject, body_html):
 
     with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server:
         server.starttls()
-        server.login(config.SMTP_USER, config.SMTP_PASS)
+        if config.SMTP_USER is not None and config.SMTP_PASS is not None:
+            server.login(config.SMTP_USER, config.SMTP_PASS)
         server.send_message(msg)
 
 @app.route("/reply/<reply_type>/<guest_email>", methods=["GET", "POST"])

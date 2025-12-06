@@ -10,14 +10,14 @@ def send_notification(notification_type, booking_id=None, name=None, phone=None,
     """
     Unified notification sender using Sender API.
     Supports:
-      - admin_alert
-      - customer_alert (booking created)
-      - guest_confirmation
-      - booking_acceptance
-      - booking_rejection
-      - booking_pending
-      - feedback_response
-      - contact_form_alert
+    - admin_alert
+    - customer_alert (booking created)
+    - guest_confirmation
+    - booking_acceptance
+    - booking_rejection
+    - booking_pending
+    - feedback_response
+    - contact_form_alert
     """
 
     subject_map = {
@@ -318,14 +318,14 @@ def send_notification(notification_type, booking_id=None, name=None, phone=None,
 
             # Attach logo image inline
                 with open("static/images/icons/RAG_Logo.png", "rb") as img:
-                    admin_msg.get_payload()[1].add_related(img.read(), maintype="image", subtype="png", cid="RAG_Logo") # type: ignore
+                    msg.get_payload()[1].add_related(img.read(), maintype="image", subtype="png", cid="RAG_Logo") # type: ignore
 
             # Send email    
-            with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server:
+            with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server: # type: ignore
                     server.starttls()
-                    if config.SMTP_USER is not None and config.SMTP_PASS is not None:
-                        server.login(config.SMTP_USER, config.SMTP_PASS)
-                    server.send_message(admin_msg)
+                    if config.SMTP_USER is not None and config.SMTP_PASS is not None:  # type: ignore
+                        server.login(config.SMTP_USER, config.SMTP_PASS) # type: ignore 
+                    server.send_message(msg)
             server.send_message(msg)
             print(f"✅ {notification_type} email sent via SMTP")
         except Exception as e:

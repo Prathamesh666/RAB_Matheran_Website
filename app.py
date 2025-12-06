@@ -916,5 +916,7 @@ def page_not_found(e):
     return render_template("404.html"), 404
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', ssl_context=('cert.pem', 'key.pem'), debug=True) 
+    #app.run(host='0.0.0.0', ssl_context=('cert.pem', 'key.pem'), debug=True) 
     #app.run(host='0.0.0.0', debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Render sets PORT automatically
+    app.run(host="0.0.0.0", port=port, debug=False)

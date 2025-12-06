@@ -5,7 +5,7 @@
   <div class="col-md-6">
     <h1>Welcome to Shri Ranchoddas Hindu Arogya Bhavan</h1>
     
-    <p class="lead">A peaceful stay in Matheran Hill Station, close to forest nature and local attractions. We offer comfortable rooms, home-cooked meals, and warm hospitality.</p>
+    <p class="lead">In our house, The guest is akin to God.<br>A peaceful stay in Matheran Hill Station, close to forest nature and local attractions. We offer comfortable rooms, home-cooked meals, and warm hospitality.</p>
     <h3>🌿 Quick Highlights</h3>
     <ul>
       ✅ Clean, cozy rooms with warm bedding</br>
@@ -31,7 +31,6 @@
     <a class="btn btn-outline-secondary" href="{{ url_for('gallery') }}">View Gallery</a>
     </div>
   </div>
-
   <div class="col-md-6">
     <div id="homeCarousel" class="carousel slide" data-bs-ride="carousel">
       <div class="carousel-inner">
@@ -42,7 +41,7 @@
               class="d-block w-100"
               alt="Hotel image"
               data-bs-toggle="modal"
-              data-bs-target="#imageModal"
+              data-bs-target="#imageModal" width="auto" height="auto"
               data-full="{{ url_for('static', filename='images/' ~ img) }}">
         </div>
         {% endfor %}
@@ -60,11 +59,11 @@
 <div class="row">
   <div class="col-md-6">
     <h3>How to reach</h3>
-    <p>📍 Location: Before Union Bank & Local Market, Matheran Hill Station. Local Horse Ride, transport and walking paths connect the hotel to the main market and viewpoints. For long journey take the railway path</p>
+    <p class="lead">📍 Location: Before Union Bank & Local Market, Matheran Hill Station. Local Horse Ride, transport and walking paths connect the hotel to the main market and viewpoints. For long journey take the railway path</p>
   </div>
   <div class="col-md-6">
     <h3>Contact</h3>
-    <p><strong>Phone:</strong> +91-2246051977/9320642848 <br><strong>Email:</strong> lata.mahimkar@gmail.com</p>
+    <p class="lead"><strong>Phone:</strong> +91-2246051977/9320642848 Call Timings: Mon-Fri(1pm-6pm)<br><strong>Email:</strong> p397366@gmail.com</p>
   </div><br>
   <center>
   <div class="col-md-6">
@@ -72,7 +71,11 @@
     <img src="{{ url_for('static', filename='images/Matheran_Map.jpeg') }}"
         alt="Matheran Map" class="img-fluid rounded Map"
         data-bs-toggle="modal" data-bs-target="#imageModal"
-        data-full="{{ url_for('static', filename='images/Matheran_Map.jpeg') }}">
+        data-full="{{ url_for('static', filename='images/Matheran_Map.jpeg') }}"></img><br><br>
+    <img src="{{ url_for('static', filename='images/icons/Atithidevo_Bhava.png') }}"
+        alt="Atithidevo Bhava" class="img-fluid rounded Map" border="6xp"
+        data-bs-toggle="modal" data-bs-target="#imageModal"
+        data-full="{{ url_for('static', filename='images/icons/Atithidevo_Bhava.png') }}"></img>
   </div>
 </div>
 

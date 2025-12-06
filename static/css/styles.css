@@ -77,8 +77,8 @@ body {
     }
 
     .Map {
-    width: 99%;
-    max-width: 600px;
+    width: 90%;
+    max-width: 400px;
     height: auto;
     border-radius: 9px; /* optional styling */
     }

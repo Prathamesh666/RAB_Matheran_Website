@@ -294,7 +294,7 @@ def send_notification(notification_type, booking_id=None, name=None, phone=None,
                 },
                 json=payload
             )
-            if response.status_code in (200, 202):
+            if response.status_code in {200, 202}:
                 print(f"✅ {notification_type} email sent via Sender API")
             else:
                 print("❌ Failed via Sender:", response.status_code, response.text)

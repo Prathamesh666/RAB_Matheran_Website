@@ -5,15 +5,17 @@
 <table class="table table-striped">
   <thead>
     <tr>
-      <th>Preference</th><th>Name</th><th>Phone</th><th>Check-in</th><th>Check-out</th><th>Guests</th><th>Status</th><th><center>Actions</center></th>
+      <th>Pref</th><th>Date & Time</th><th>Name</th><th>Phone</th><th>Mail</th><th>Check-in</th><th>Check-out</th><th>Guests</th><th>Status</th><th><center>Actions</center></th>
     </tr>
   </thead>
   <tbody>
     {% for b in bookings %}
     <tr>
       <td>{{ loop.index }}</td>
+      <td> {{ b.created_at.strftime("%d-%m-%Y") }}<br> {{ b.created_at.strftime("%I:%M %p") }}</td>
       <td>{{ b.name }}</td>
       <td>{{ b.phone }}</td>
+      <td>{{ b.email }}</td>
       <td>{{ b.check_in }}</td>
       <td>{{ b.check_out }}</td>
       <td>{{ b.guests }}</td>

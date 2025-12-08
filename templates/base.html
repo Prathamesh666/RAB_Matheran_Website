@@ -32,9 +32,6 @@
                 <h5 class="modal-title" id="homeModalLabel">Go to Home?</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
               </div>
-              <div class="modal-body">
-                Do you want to navigate to the Home page?
-              </div>
               <div class="modal-footer">
                 <a href="{{ url_for('index') }}" class="btn btn-primary">Yes, take me Home</a>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -54,6 +51,7 @@
           <li class="nav-item"><a class="nav-link" href="{{ url_for('gallery_edit') }}">Manage Gallery</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ url_for('bookings_list') }}">Bookings</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ url_for('feedbacks_list') }}">Feedbacks</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('contact_list') }}">Contacts</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
         {% else %}
           <li class="nav-item"><a class="nav-link" href="{{ url_for('feedback') }}">Feedback</a></li>
@@ -80,9 +78,12 @@
     </main>
 
     <footer class="gallery-page py-4 mt-5">
-      <div class="row container text-center">
-        <p class="lead" style="color: white;">Address: Plot No: 160, Before Union Bank & Local Market, Matheran Hill Station. | Phone: +91-2246051977/9320642848 Call Timings: Mon-Fri(1pm-6pm)</p>
-        <p class="lead" style="color: white;"><small>AC facility not available</small></p>
+      <div class="container text-center">
+        <p class="lead text-white">
+          Address: Plot No: 160, Before Union Bank & Local Market, Matheran Hill Station. |
+          Phone: +91-2246051977/9320642848 Call Timings: Mon-Fri (1pm-6pm)
+        </p>
+        <p class="lead text-white"><small>AC facility not available</small></p>
       </div>
     </footer>
 

@@ -2,15 +2,17 @@ from flask import Flask, render_template, request, redirect, url_for, flash, abo
 from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
 from datetime import datetime, timezone
-import config, os
 from werkzeug.security import check_password_hash
 from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin
-import smtplib
+import smtplib, os
 from email.message import EmailMessage
 from werkzeug.utils import secure_filename
 import gridfs
 from Email_Notification import *
 import base64
+from dotenv import load_dotenv
+import config
+load_dotenv()
 
 app = Flask(__name__)
 app.config["MONGO_URI"] = config.MONGO_URI # type: ignore
@@ -32,9 +34,7 @@ class AdminUser(UserMixin):
 @login_manager.user_loader
 def load_user(user_id):
     admin_doc = db.admins.find_one({"_id": ObjectId(user_id)}) # type: ignore
-    if admin_doc:
-        return AdminUser(admin_doc)
-    return None
+    return AdminUser(admin_doc) if admin_doc else None
 
 # List of gallery images (exact filenames)
 GALLERY_CATEGORIES = {
@@ -186,235 +186,188 @@ def gallery_edit():
 # Booking create with validation and optional email confirmation
 @app.route("/booking", methods=["GET", "POST"])
 def booking():
-    if request.method == "POST":
-        name = request.form.get("name")
-        phone = request.form.get("phone")
-        email = request.form.get("email")
-        check_in = request.form.get("check_in")
-        check_out = request.form.get("check_out")
-        guests = int(request.form.get("guests", 1))
-        note = request.form.get("note", "")
+    if request.method != "POST":
+        return render_template("booking.html")
+    
+    name = request.form.get("name")
+    phone = request.form.get("phone")
+    email = request.form.get("email")
+    check_in = request.form.get("check_in")
+    check_out = request.form.get("check_out")
+    guests = int(request.form.get("guests", 1))
+    note = request.form.get("note", "")
 
-        # Server-side validation
-        if not check_in or not check_out:
-            flash("Check-in and check-out dates are required.", "danger")
-            return redirect(url_for("booking"))
-        try:
-            ci = datetime.strptime(check_in, "%Y-%m-%d").date()
-            co = datetime.strptime(check_out, "%Y-%m-%d").date()
-        except Exception:
-            flash("Invalid dates provided.", "danger")
-            return redirect(url_for("booking"))
+    # Server-side validation
+    if not check_in or not check_out:
+        flash("Check-in and check-out dates are required.", "danger")
+        return redirect(url_for("booking"))
+    try:
+        ci = datetime.strptime(check_in, "%Y-%m-%d").date()
+        co = datetime.strptime(check_out, "%Y-%m-%d").date()
+    except Exception:
+        flash("Invalid dates provided.", "danger")
+        return redirect(url_for("booking"))
 
-        if ci >= co:
-            flash("Check-out date must be after check-in date.", "danger")
-            return redirect(url_for("booking"))
+    if ci >= co:
+        flash("Check-out date must be after check-in date.", "danger")
+        return redirect(url_for("booking"))
 
-        booking_doc = {
-            "name": name,
-            "phone": phone,
-            "email": email,
-            "check_in": check_in,
-            "check_out": check_out,
-            "guests": guests,
-            "note": note,
-            "created_at": datetime.now(timezone.utc),
-            "status": "Pending"
-        }
-        result = db.bookings.insert_one(booking_doc) # type: ignore
-        booking_id = str(result.inserted_id)
-        flash(f"Booking created successfully. Booking ID: {booking_id}", "success")
-        
-        # Optional email creation for guest
-        def booking_pending(email, name, booking_id, check_in, check_out):
-            subject = "Booking Created - Shri Ranchoddas Hindu Arogya Bhavan"
-            plain_body = (
-                f"Dear {name},\n\nYour booking (ID: {booking_id}) is generated in the system and is currently pending acceptance "
-                f"for {check_in} to {check_out} at Shri Ranchoddas Hindu Arogya Bhavan Guest House.\n\n"
-                f"Kindly wait for further confirmation mail.\n\nThanks for your cooperation\n\n"
-                f"Regards,\nShri Ranchoddas Hindu Arogya Bhavan From Matheran Hill Station"
-            )
-        
-            html_body = f"""
-            <html>
-            <head>
-            <style>
-                body {{ font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px; color: #333; }}
-                .card {{ background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }}
-                .logo {{ text-align: center; margin-bottom: 20px; }}
-                .logo img {{ max-width: 180px; height: auto; border-radius: 8px; }}
-                h2 {{ color: #0b8a61; }}
-            </style>
-            </head>
-            <body>
-            <div class="card">
-                <div class="logo">
-                <img src="cid:RAG_Logo" alt="Ranchoddas Arogya Bhavan Logo" />
-                </div>
-                <p>Dear {name},</p>
-                <p>Your booking (ID: {booking_id}) is generated in the system and is currently pending acceptance
-                for Check-In: {check_in} to Check-Out: {check_out} at Shri Ranchoddas Hindu Arogya Bhavan Guest House.</p>
-                <p>Kindly wait for further confirmation mail.</p>
-                <p>Thanks for your cooperation.</p>
-                <p>Regards,<br>Shri Ranchoddas Hindu Arogya Bhavan<br>From Matheran Hill Station</p>
-            </div>
-            </body>
-            </html>
-            """
-
-            logo_path = "static/images/icons/RAG_Logo.png"
-            logo_data = None
-            if os.path.exists(logo_path):
-                with open(logo_path, "rb") as img:
-                    logo_data = base64.b64encode(img.read()).decode()
-
-            sender_key = os.getenv("SENDER_API_KEY")
-
-            if sender_key:
-                # --- Production: Sender API ---
-                payload = {
-                    "from": {"email": os.getenv("ADMIN_EMAIL"), "name": "Ranchoddas Bhavan"},
-                    "to": [{"email": email}],
-                    "subject": subject,
-                    "html": html_body,
-                    "text": plain_body
-                }
-                if logo_data:
-                    payload["attachments"] = [{
-                        "content": logo_data,
-                        "type": "image/png",
-                        "filename": "RAG_Logo.png",
-                        "disposition": "inline",
-                        "cid": "RAG_Logo"
-                    }]
-                try:
-                    response = requests.post(
-                        "https://api.sender.net/v2/email",
-                        headers={
-                            "Authorization": f"Bearer {sender_key}",
-                            "Content-Type": "application/json"
-                        },
-                        json=payload
-                    )
-                    if response.status_code in (200, 202):
-                        print("✅ Booking pending email sent via Sender API")
-                    else:
-                        print("❌ Failed via Sender:", response.status_code, response.text)
-                except Exception as e:
-                    print("❌ Exception via Sender:", e)
-
-            else:
-                # --- Local: SMTP ---
-                try:
-                    msg = EmailMessage()
-                    msg["Subject"] = subject
-                    msg["From"] = os.getenv("SMTP_USER")
-                    msg["To"] = email
-                    msg.set_content(plain_body)
-                    msg.add_alternative(html_body, subtype="html")
-        
-                    if logo_data:
-                        msg.get_payload()[1].add_related( # type: ignore
-                            base64.b64decode(logo_data), maintype="image", subtype="png", cid="RAG_Logo"
-                        )
-
-                    with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server: # type: ignore
-                        server.starttls()
-                        if config.SMTP_USER is not None and config.SMTP_PASS is not None: # type: ignore
-                            server.login(config.SMTP_USER, config.SMTP_PASS) # type: ignore
-                            server.send_message(msg)
-                    print("✅ Booking pending email sent via SMTP")
-                except Exception as e:
-                    print("❌ Failed via SMTP:", e)
-                    
-        booking_pending(email, name, booking_id, check_in, check_out)
-
-        # 🔔 Notify admin by email
+    booking_doc = {
+        "name": name,
+        "phone": phone,
+        "email": email,
+        "check_in": check_in,
+        "check_out": check_out,
+        "guests": guests,
+        "note": note,
+        "created_at": datetime.now(timezone.utc).strftime("%I:%M %p"),  # 12-hour format
+        "status": "Pending"
+    }
+    result = db.bookings.insert_one(booking_doc) # type: ignore
+    booking_id = str(result.inserted_id)
+    flash(f"Booking created successfully. Booking ID: {booking_id}", "success")
+    
+    # Optional email creation for guest
+    def booking_pending(email, name, booking_id, check_in, check_out):
         if config.SMTP_HOST and getattr(config, "ADMIN_EMAIL", None): # type: ignore
             try:
-                admin_msg = EmailMessage()
-                admin_msg["Subject"] = f"New Booking Alert - ID {booking_id}"
-                admin_msg["From"] = config.SMTP_USER # type: ignore
-                admin_msg["To"] = config.ADMIN_EMAIL # type: ignore
-                admin_msg.set_content(
-                    f"A new booking has been created.\n\n"
-                    f"Booking ID: {booking_id}\n"
-                    f"Name: {name}\n"
-                    f"Phone: {phone}\n"
-                    f"Email: {email}\n"
-                    f"Check-in: {check_in} → Check-out: {check_out}\n"
-                    f"Guests: {guests}\n"
-                    f"Note: {note}\n\n"
-                    f"Please check the bookings list on the website to update the status."
+                msg = EmailMessage()
+                msg["Subject"] = f"New Booking Alert - ID {booking_id}"
+                msg["From"] = config.SMTP_USER
+                msg["To"] = email
+                msg.set_content(
+                    f"Dear {name},\n\nYour booking (ID: {booking_id}) is generated in the system and is currently pending acceptance "
+                    f"for {check_in} to {check_out}.\n\nKindly wait for further confirmation mail.\n\n"
+                    f"Thanks for your cooperation.\n\nRegards,\nShri Ranchoddas Hindu Arogya Bhavan\nMatheran Hill Station"
                 )
+                
                 html_body = f"""
                 <html>
                 <head>
-                    <style>
-                        body {{ font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px; color: #333; }}
-                        .card {{ background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }}
-                        .logo {{ text-align: center; margin-bottom: 20px; }}
-                        .logo img {{ max-width: 180px; height: auto; border-radius: 8px; }}
-                        h2 {{ color: #0b8a61; }}
-                    </style>
+                <style>
+                    body {{ font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px; color: #333; }}
+                    .card {{ background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }}
+                    .logo {{ text-align: center; margin-bottom: 20px; }}
+                    .logo img {{ max-width: 180px; height: auto; border-radius: 8px; }}
+                    h2 {{ color: #0b8a61; }}
+                </style>
                 </head>
                 <body>
                 <div class="card">
                     <div class="logo">
                     <img src="cid:RAG_Logo" alt="Ranchoddas Arogya Bhavan Logo" />
                     </div>
-                    <h2>New Booking Created</h2>
-                    <p>A new booking has been created.</p>
-
-                    <p><strong>Booking ID:</strong> { booking_id }</p>
-                    <p><strong>Name:</strong> { name }</p>
-                    <p><strong>Phone:</strong> { phone }</p>
-                    <p><strong>Email:</strong> { email }</p>
-                    <p><strong>Check-in:</strong> { check_in } → <strong>Check-out:</strong> { check_out }</p>
-                    <p><strong>Guests:</strong> { guests }</p>
-                    <p><strong>Note:</strong> { note }</p>
-
-                    <p>Please check the bookings list on the website to update the status.</p>
+                    <p>Dear { name },</p>
+                    <p>Your booking (ID: { booking_id }) is generated in the system and is currently pending acceptance
+                    for Check-In: { check_in } to Check-Out: { check_out } at Shri Ranchoddas Hindu Arogya Bhavan Guest House.
+                    </p>
+                    <p>Kindly wait for further confirmation mail.</p>
+                    <p>Thanks for your cooperation.</p>
+                    <p>Regards,<br>Shri Ranchoddas Hindu Arogya Bhavan<br>From Matheran Hill Station</p>
                 </div>
                 </body>
                 </html>
                 """
-                admin_msg.add_alternative(html_body, subtype="html")
+                msg.add_alternative(html_body, subtype="html")
                 # Attach logo image inline
                 with open("static/images/icons/RAG_Logo.png", "rb") as img:
-                    admin_msg.get_payload()[1].add_related(img.read(), maintype="image", subtype="png", cid="RAG_Logo") # type: ignore
-                    
+                    msg.get_payload()[1].add_related(img.read(), maintype="image", subtype="png", cid="RAG_Logo") # type: ignore
+                
                 with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server: # type: ignore
                     server.starttls()
                     if config.SMTP_USER is not None and config.SMTP_PASS is not None: # type: ignore
                         server.login(config.SMTP_USER, config.SMTP_PASS) # type: ignore
-                    server.send_message(admin_msg)
-            except Exception:
-                app.logger.exception("Failed to send admin notification email")
+                    server.send_message(msg)
+            except Exception: 
+                app.logger.exception("Failed to send guest notification email")
+                
+    booking_pending(email, name, booking_id, check_in, check_out)
 
-        # 📱 Optional: Notify admin by SMS (Twilio)
-        if getattr(config, "TWILIO_SID", None) and getattr(config, "ADMIN_PHONE", None):
-            try:
-                from twilio.rest import Client
-                client = Client(config.TWILIO_SID, config.TWILIO_AUTH_TOKEN) # type: ignore
-                client.messages.create(
-                    body=f"Dear Admin You Have A New Booking Alert.\n\n"
-                    f"Booking ID: {booking_id}\n"
-                    f"Name: {name}\n"
-                    f"Phone: {phone}\n"
-                    f"Email: {email}\n"
-                    f"Check-in: {check_in} to Check-out: {check_out}\n"
-                    f"Guests: {guests}\n"
-                    f"Note: {note}\n\n"
-                    f"Please check the bookings list on the website to update the status.",
-                    from_=config.TWILIO_PHONE, # type: ignore
-                    to=config.ADMIN_PHONE if config.ADMIN_PHONE is not None else "" # type: ignore
-                )
-            except Exception:
-                app.logger.exception("Failed to send SMS notification")
+    # 🔔 Notify admin by email
+    if config.SMTP_HOST and getattr(config, "ADMIN_EMAIL", None): # type: ignore
+        try:
+            admin_msg = EmailMessage()
+            admin_msg["Subject"] = f"New Booking Alert - ID {booking_id}"
+            admin_msg["From"] = config.SMTP_USER # type: ignore
+            admin_msg["To"] = config.ADMIN_EMAIL # type: ignore
+            admin_msg.set_content(
+                f"A new booking has been created.\n\n"
+                f"Booking ID: {booking_id}\n"
+                f"Name: {name}\n"
+                f"Phone: {phone}\n"
+                f"Email: {email}\n"
+                f"Check-in: {check_in} → Check-out: {check_out}\n"
+                f"Guests: {guests}\n"
+                f"Note: {note}\n\n"
+                f"Please check the bookings list on the website to update the status."
+            )
+            html_body = f"""
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px; color: #333; }}
+                    .card {{ background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }}
+                    .logo {{ text-align: center; margin-bottom: 20px; }}
+                    .logo img {{ max-width: 180px; height: auto; border-radius: 8px; }}
+                    h2 {{ color: #0b8a61; }}
+                </style>
+            </head>
+            <body>
+            <div class="card">
+                <div class="logo">
+                <img src="cid:RAG_Logo" alt="Ranchoddas Arogya Bhavan Logo" />
+                </div>
+                <h2>New Booking Created</h2>
+                <p>A new booking has been created.</p>
 
-        return redirect(url_for("bookings_list"))
-    return render_template("booking.html")
+                <p><strong>Booking ID:</strong> { booking_id }</p>
+                <p><strong>Name:</strong> { name }</p>
+                <p><strong>Phone:</strong> { phone }</p>
+                <p><strong>Email:</strong> { email }</p>
+                <p><strong>Check-in:</strong> { check_in } → <strong>Check-out:</strong> { check_out }</p>
+                <p><strong>Guests:</strong> { guests }</p>
+                <p><strong>Note:</strong> { note }</p>
+
+                <p>Please check the bookings list on the website to update the status.</p>
+            </div>
+            </body>
+            </html>
+            """
+            admin_msg.add_alternative(html_body, subtype="html")
+            # Attach logo image inline
+            with open("static/images/icons/RAG_Logo.png", "rb") as img:
+                admin_msg.get_payload()[1].add_related(img.read(), maintype="image", subtype="png", cid="RAG_Logo") # type: ignore
+                
+            with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server: # type: ignore
+                server.starttls()
+                if config.SMTP_USER is not None and config.SMTP_PASS is not None: # type: ignore
+                    server.login(config.SMTP_USER, config.SMTP_PASS) # type: ignore
+                server.send_message(admin_msg)
+        except Exception:
+            app.logger.exception("Failed to send admin notification email")
+
+    # 📱 Optional: Notify admin by SMS (Twilio)
+    if getattr(config, "TWILIO_SID", None) and getattr(config, "ADMIN_PHONE", None):
+        try:
+            from twilio.rest import Client
+            client = Client(config.TWILIO_SID, config.TWILIO_AUTH_TOKEN) # type: ignore
+            client.messages.create(
+                body=f"Dear Admin You Have A New Booking Alert.\n\n"
+                f"Booking ID: {booking_id}\n"
+                f"Name: {name}\n"
+                f"Phone: {phone}\n"
+                f"Email: {email}\n"
+                f"Check-in: {check_in} to Check-out: {check_out}\n"
+                f"Guests: {guests}\n"
+                f"Note: {note}\n\n"
+                f"Please check the bookings list on the website to update the status.",
+                from_=config.TWILIO_PHONE, # type: ignore
+                to=config.ADMIN_PHONE if config.ADMIN_PHONE is not None else "" # type: ignore
+            )
+        except Exception:
+            app.logger.exception("Failed to send SMS notification")
+
+    return redirect(url_for("bookings_list"))
 
 # Bookings list protected for admin
 @app.route("/bookings")
@@ -862,6 +815,44 @@ def contact():
         return redirect(url_for("contact"))
 
     return render_template("contact.html")
+
+@app.route("/contacts")
+@login_required
+def contact_list():
+    contacts = list(db.contacts.find().sort("created_at", 1)) # type: ignore
+    return render_template("contact_list.html", contacts=contacts)
+
+@app.route("/contacts/edit/<contact_id>", methods=["GET", "POST"])
+@login_required
+def contact_edit(contact_id):
+    contact = db.contacts.find_one({"_id": ObjectId(contact_id)}) #type: ignore
+    if request.method == "POST":
+        db.contacts.update_one( #type: ignore
+            {"_id": ObjectId(contact_id)},
+            {"$set": {
+                "name": request.form["name"],
+                "phone": request.form["phone"],
+                "email": request.form["email"],
+                "note": request.form["note"]
+            }}
+        )
+        flash("Contact updated successfully!", "success")
+        return redirect(url_for("contact_list"))
+    return render_template("contact_edit.html", contact=contact)
+
+@app.route("/contacts/delete/<contact_id>", methods=["POST"])
+@login_required
+def contact_delete(contact_id):
+    db.contacts.delete_one({"_id": ObjectId(contact_id)}) #type: ignore
+    flash("Contact deleted successfully!", "danger")
+    return redirect(url_for("contact_list"))
+
+@app.route("/contacts/delete_all", methods=["POST"])
+@login_required
+def contact_delete_all():
+    db.contacts.delete_many({})   #type: ignore # deletes all documents in contacts collection
+    flash("All contacts deleted successfully!", "danger")
+    return redirect(url_for("contact_list"))
 
 def send_html_reply(to_email, subject, body_html):
     msg = EmailMessage()

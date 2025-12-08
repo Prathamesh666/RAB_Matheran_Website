@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<body class="contact-page">
+<h2>Edit Contact</h2>
+
+<form method="post" action="{{ url_for('contact') }}">
+    <div class="mb-3">
+        <label class="form-label">Name</label>
+        <input class="form-control" value="{{ contact.name }}" name="name" required>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input class="form-control" value="{{ contact.email }}" name="email" type="email" required>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Message</label>
+        <textarea class="form-control" name="message" rows="3" required>{{ contact.message }}</textarea>
+    </div>
+    <button class="btn btn-primary" type="submit">Save Changes</button>
+    </form>
+</body>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<body class="contact-page">
+<h2>Contacts</h2>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Pref</th>
+      <th>Date & Time</th>
+      <th>Name</th>
+      <th>Email</th>
+      <th>Message</th>
+      <th><center>Actions</center></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in contacts %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>
+        {{ c.created_at.strftime("%d-%m-%Y") }}<br>
+        {{ c.created_at.strftime("%I:%M %p") }}
+      </td>
+      <td>{{ c.name }}</td>
+      <td>{{ c.email }}</td>
+      <td>{{ c.message }}</td>
+      <td>
+        <a class="btn btn-sm btn-primary" href="{{ url_for('contact_edit', contact_id=c._id) }}">Edit</a>
+        <form method="post" action="{{ url_for('contact_delete', contact_id=c._id) }}" style="display:inline-block" onsubmit="return confirm('Delete contact?');">
+          <button class="btn btn-sm btn-danger">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- Delete All Button -->
+<div class="d-flex justify-content-end mb-3">
+  <form method="post" action="{{ url_for('contact_delete_all') }}" 
+        onsubmit="return confirm('Are you sure you want to delete ALL contacts?');">
+    <button class="btn btn-danger">Delete All</button>
+  </form>
+</div>
+
+</body>
+{% endblock %}

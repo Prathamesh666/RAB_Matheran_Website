@@ -123,6 +123,13 @@ body {
   box-sizing: border-box;
 }
 
+/* Hover Effects */
+.hover-shadow:hover {
+  transform: translateY(-5px);
+  transition: all 0.3s ease;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+}
+
 /* Header / Hero Section */
 header {
   background: linear-gradient(rgba(46,77,56,0.7), rgba(46,77,56,0.7)),

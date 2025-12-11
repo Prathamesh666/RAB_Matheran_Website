@@ -1,103 +1,196 @@
 {% extends "base.html" %}
 {% block content %}
 <body class="home-page">
-<div class="row">
-  <div class="col-md-6">
-    <h1>Welcome to Shri Ranchoddas Hindu Arogya Bhavan</h1>
-    
-    <p class="lead">In our house, The guest is akin to God.<br>A peaceful stay in Matheran Hill Station, close to forest nature and local attractions. We offer comfortable rooms, home-cooked meals, and warm hospitality.</p>
-    <h3>🌿 Quick Highlights</h3>
-    <ul>
-      ✅ Clean, cozy rooms with warm bedding</br>
-      ✅ Scenic trails and cold forest views nearby</br>
-      ✅ Family-run hospitality with personal care</br>
-      ✅ Affordable stays rooted in tradition</br>
-    </ul>
-        <h3>🏞 Unique Experiences</h3>
-    <ul>
-        At Shri Ranchoddas Hindu Arogya Bhavan, every stay is special:<br>
-        🌿 Nature-inspired living, away from city noise<br>
-        🏞 Easy access to trails and viewpoints<br>
-        🍲 Simple, hearty meals with local flavors<br>
-        🕊 Calm environment for relaxation, meditation, or creative inspiration<br>
-    </ul>
-        <h3>🎉 Special Offers</h3>
-    <ul>    
-      <li>Winter stays with complimentary hot water service<br>
-      <li>Seasonal discounts for extended bookings
-    </ul>
-    <div>
-    <a class="btn btn-primary" href="{{ url_for('booking') }}">Book Now</a>
-    <a class="btn btn-outline-secondary" href="{{ url_for('gallery') }}">View Gallery</a>
-    </div>
-  </div>
-  <div class="col-md-6">
-    <div id="homeCarousel" class="carousel slide" data-bs-ride="carousel">
-      <div class="carousel-inner">
-        {% for img in images %}
-        <div class="carousel-item {% if loop.index0 == 0 %}active{% endif %}">
-          <!-- Image triggers modal -->
-          <img src="{{ url_for('static', filename='images/' ~ img) }}"
-              class="d-block w-100"
-              alt="Hotel image"
-              data-bs-toggle="modal"
-              data-bs-target="#imageModal" width="auto" height="auto"
-              data-full="{{ url_for('static', filename='images/' ~ img) }}">
+    <!-- Hero Section -->
+    <section class="hero bg-dark text-white text-center d-flex align-items-center" 
+        style="background:url('{{ url_for('static', filename='images/hero.jpeg') }}') top/cover no-repeat; height: auto;">
+    <div class="container">
+        <h1 class="display-5 fw-bold">Welcome to Shri Ranchoddas Hindu Arogya Bhavan</h1>
+        <p class="lead mt-3">In our house, the guest is akin to God.<br>
+        A peaceful stay in Matheran Hill Station, close to forest nature and local attractions.</p>
+        <div class="mt-4">
+        <a class="btn btn-warning btn-lg me-2" href="{{ url_for('booking') }}">Book Now</a>
+        <a class="btn btn-outline-light btn-lg" href="{{ url_for('gallery') }}">View Gallery</a>
         </div>
-        {% endfor %}
-      </div>
-      <button class="carousel-control-prev" type="button" data-bs-target="#homeCarousel" data-bs-slide="prev">
-        <span class="carousel-control-prev-icon"></span>
-      </button>
-      <button class="carousel-control-next" type="button" data-bs-target="#homeCarousel" data-bs-slide="next">
-        <span class="carousel-control-next-icon"></span>
-      </button>
+        <br><br>
+        <h2 class="text-center font-color: light mb-5">📸 Our Place</h2>
+        <div id="homeCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner">
+            {% for img in images %}
+            <div class="carousel-item {% if loop.index0 == 0 %}active{% endif %}">
+                <img src="{{ url_for('static', filename='images/' ~ img) }}"
+                    class="d-block mx-auto img-fluid rounded shadow"
+                    style="max-height:350px; object-fit:cover;"
+                    alt="Hotel image"
+                    data-bs-toggle="modal"
+                    data-bs-target="#imageModal"
+                    data-full="{{ url_for('static', filename='images/' ~ img) }}">
+            </div>
+            {% endfor %}
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#homeCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#homeCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+        </button>
+        </div>
     </div>
-  </div>
-</div>
-<hr>
-<div class="row">
-  <div class="col-md-6">
-    <h3>How to reach</h3>
-    <p class="lead">📍 Location: Before Union Bank & Local Market, Matheran Hill Station. Local Horse Ride, transport and walking paths connect the hotel to the main market and viewpoints. For long journey take the railway path</p>
-  </div>
-  <div class="col-md-6">
-    <h3>Contact</h3>
-    <p class="lead"><strong>Phone:</strong> +91-2246051977/9320642848 Call Timings: Mon-Fri(1pm-6pm)<br><strong>Email:</strong> p397366@gmail.com</p>
-  </div><br>
-  <center>
-  <div class="col-md-6">
-    <!-- Map triggers modal -->
-    <img src="{{ url_for('static', filename='images/Matheran_Map.jpeg') }}"
-        alt="Matheran Map" class="img-fluid rounded Map"
-        data-bs-toggle="modal" data-bs-target="#imageModal"
-        data-full="{{ url_for('static', filename='images/Matheran_Map.jpeg') }}"></img><br><br>
-    <img src="{{ url_for('static', filename='images/icons/Atithidevo_Bhava.png') }}"
-        alt="Atithidevo Bhava" class="img-fluid rounded Map" border="6xp"
-        data-bs-toggle="modal" data-bs-target="#imageModal"
-        data-full="{{ url_for('static', filename='images/icons/Atithidevo_Bhava.png') }}"></img>
-  </div>
-</div>
+    </section>
+
+    <!-- Highlights Section -->
+    <script src="https://kit.fontawesome.com/your-kit-id.js" crossorigin="anonymous"></script>
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <section id="highlights" class="py-5 position-relative">
+    <div class="container">
+    <h2 class="text-center mb-5 fw-bold text-success">🌿 Quick Highlights</h2>
+        <div class="row g-4">
+        <!-- Card 1 -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 text-center border-0 shadow-lg bg-white rounded-4 hover-shadow">
+                <div class="card-body py-4">
+                <i class="fas fa-2x text-success mb-3">🛏️</i>
+                <h5 class="card-title fw-semibold">Cozy Rooms</h5>
+                <p class="card-text text-muted">Warm bedding and peaceful comfort.</p>
+                </div>
+            </div>
+        </div>
+        <!-- Card 2 -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 text-center border-0 shadow-lg bg-white rounded-4 hover-shadow">
+                <div class="card-body py-4">
+                <i class="fas fa-2x text-success mb-3">🌲</i>
+                <h5 class="card-title fw-semibold">Scenic Trails</h5>
+                <p class="card-text text-muted">Cold forest views nearby.</p>
+                </div>
+            </div>
+        </div>
+        <!-- Card 3 -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 text-center border-0 shadow-lg bg-white rounded-4 hover-shadow">
+                <div class="card-body py-4">
+                <i class="fas fa-2x text-success mb-3">👨‍👩‍👧</i>
+                <h5 class="card-title fw-semibold">Family Care</h5>
+                <p class="card-text text-muted">Hospitality with personal touch.</p>
+                </div>
+            </div>
+        </div>
+        <!-- Card 4 -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 text-center border-0 shadow-lg bg-white rounded-4 hover-shadow">
+                <div class="card-body py-4">
+                    <i class="fas fa-2x text-success mb-3">💰</i>
+                    <h5 class="card-title fw-semibold">Affordable Stays</h5>
+                    <p class="card-text text-muted">Tradition meets roots.</p>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+    </section>
+    
+    <!-- Unique Experiences -->
+    <section id="experiences" class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5 fw-bold text-success">🏞 Unique Experiences</h2>
+        <!-- Card 1 -->
+        <div class="row text-center">
+            <div class="col-md-6 col-lg-3">
+            <div class="card h-100 text-center border-0 shadow-lg bg-white rounded-4 hover-shadow">
+                <div class="card-body py-4">
+                    <i class="fas fa-2x text-success mb-3">🌿</i>
+                    <h5 class="card-title fw-semibold">Nature-inspired living</h5>
+                    <p class="card-text text-muted">Away from city noise.</p>
+                </div>
+            </div>
+        </div>
+        <!-- Card 2 -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 text-center border-0 shadow-lg bg-white rounded-4 hover-shadow">
+                <div class="card-body py-4">
+                    <i class="fas fa-2x text-success mb-3">🏞</i>
+                    <h5 class="card-title fw-semibold">Easy access</h5>
+                    <p class="card-text text-muted">To trails and viewpoints.</p>
+                </div>
+            </div>
+        </div>
+        <!-- Card 3 -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 text-center border-0 shadow-lg bg-white rounded-4 hover-shadow">
+                <div class="card-body py-4">
+                <i class="fas fa-2x text-success mb-3">🍲</i>
+                <h5 class="card-title fw-semibold">Simple & hearty meals</h5>
+                <p class="card-text text-muted">with local flavors.</p>
+                </div>
+            </div>
+        </div>
+        <!-- Card 4 -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 text-center border-0 shadow-lg bg-white rounded-4 hover-shadow">
+                <div class="card-body py-4">
+                <i class="fas fa-2x text-success mb-3">🕊</i>
+                <h5 class="card-title fw-semibold">Calm environment</h5>
+                <p class="card-text text-muted">for relaxation, meditation, or creative inspiration.</p>
+                </div>
+            </div>
+        </div>     
+    </div>
+    </div>
+    </section>
+
+    <!-- How to Reach & Contact -->
+    <section id="contact" class="py-5">
+    <center>
+    <div class="container">
+        <div class="row align-items-center">
+        <div class="col-md-6">
+            <h3>📍 How to Reach</h3>
+            <p class="lead">Before Union Bank & Local Market, Matheran Hill Station. Local horse rides, transport and walking paths connect the hotel to the main market and viewpoints. For long journeys, take the railway path.</p>
+        </div>
+        <div class="col-md-6">
+            <h3>📞 Contact</h3>
+            <p class="lead"><strong>Phone:</strong> +91-2246051977 / 9320642848<br>
+            <strong>Call Timings:</strong> Mon-Fri (1pm-6pm)<br>
+            <strong>Email:</strong> p397366@gmail.com</p>
+        </div>
+        </div>
+    </div>
+    <div class="container">
+        <img src="{{ url_for('static', filename='images/Matheran_Map.jpeg') }}"
+            alt="Matheran Map" class="img-fluid rounded Map shadow mb-4" 
+            style="max-width: auto; height:auto; align:center;"
+            data-bs-toggle="modal" data-bs-target="#imageModal"
+            data-full="{{ url_for('static', filename='images/Matheran_Map.jpeg') }}"><br><br>
+        <img src="{{ url_for('static', filename='images/icons/Atithidevo_Bhava.png') }}"
+            alt="Atithidevo Bhava" class="img-fluid rounded Map shadow"
+            style="max-width: auto; height:auto; align:center;"
+            data-bs-toggle="modal" data-bs-target="#imageModal"
+            data-full="{{ url_for('static', filename='images/icons/Atithidevo_Bhava.png') }}">
+    </div>
+    </center>
+    </section>
 
 <!-- Bootstrap Modal -->
 <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-body text-center">
-        <img id="modalImage" src="" class="img-fluid rounded">
-      </div>
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" class="img-fluid rounded">
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  const modalImage = document.getElementById("modalImage");
-  document.querySelectorAll("[data-bs-target='#imageModal']").forEach(img => {
-    img.addEventListener("click", function() {
-      modalImage.src = this.getAttribute("data-full");
+    const modalImage = document.getElementById("modalImage");
+    document.querySelectorAll("[data-bs-target='#imageModal']").forEach(img => {
+        img.addEventListener("click", function() {
+            modalImage.src = this.getAttribute("data-full");
+        });
     });
-  });
 });
 </script>
 </body>

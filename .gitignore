@@ -1,6 +1,7 @@
 #python files
 create_admin.py
 Email_Notification.py
+generate_thumbnails.py
 
 #__pycache__
 config.cpython-313.pyc

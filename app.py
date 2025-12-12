@@ -18,13 +18,6 @@ app = Flask(__name__)
 app.config["MONGO_URI"] = config.MONGO_URI # type: ignore
 app.config["SECRET_KEY"] = config.SECRET_KEY # type: ignore
 
-def format_ist(dt, fmt="%d-%m-%Y %I:%M %p IST"):
-    if dt is None:
-        return ""
-    return dt.astimezone(ZoneInfo("Asia/Kolkata")).strftime(fmt)
-
-app.jinja_env.filters['format_ist'] = format_ist
-
 mongo = PyMongo(app)
 db = mongo.db  # Ensure this line comes after app is fully configured
 

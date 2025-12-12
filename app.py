@@ -185,7 +185,7 @@ def gallery_edit():
 
 # Booking create with validation and optional email confirmation
 @app.route("/booking", methods=["GET", "POST"])
-def booking():
+def booking():  # sourcery skip: last-if-guard
     if request.method != "POST":
         return render_template("booking.html")
     
@@ -581,7 +581,7 @@ def booking_delete(booking_id):
 fs = gridfs.GridFS(db) # type: ignore
 
 @app.route("/feedback", methods=["GET", "POST"])
-def feedback():
+def feedback(): # sourcery skip: last-if-guard
     if request.method == "POST":
         name = request.form.get("name")
         email = request.form.get("email")
@@ -724,7 +724,7 @@ def feedback_delete(fb_id):
     return redirect(url_for("feedbacks_list"))
 
 @app.route("/contact", methods=["GET", "POST"])
-def contact():
+def contact():  # sourcery skip: last-if-guard
     if request.method == "POST":
         name = request.form.get("name", "").strip()
         email = request.form.get("email", "").strip()
@@ -860,7 +860,9 @@ def send_html_reply(to_email, subject, body_html):
     msg["From"] = config.SMTP_USER # type: ignore
     msg["To"] = to_email
 
-    msg.set_content(f"Dear visitor, From Ranchoddas Arogya Bhavan. This is an HTML email. Please view in a modern client.")
+    msg.set_content(
+        "Dear visitor, From Ranchoddas Arogya Bhavan. This is an HTML email. Please view in a modern client."
+    )
     msg.add_alternative(body_html, subtype="html")
 
     # Attach logo image inline

@@ -8,12 +8,13 @@
         <h1 class="display-5 fw-bold">Welcome to Shri Ranchoddas Hindu Arogya Bhavan</h1>
         <p class="lead mt-3">In our house, the guest is akin to God.<br>
         A peaceful stay in Matheran Hill Station, close to forest nature and local attractions.</p>
-        <div class="mt-4">
-        <a class="btn btn-warning btn-lg me-2" href="{{ url_for('booking') }}">Book Now</a>
-        <a class="btn btn-outline-light btn-lg" href="{{ url_for('gallery') }}">View Gallery</a>
+        <div class="mt-4 d-flex justify-content-center flex-wrap gap-2">
+            <a class="btn btn-warning btn-lg" href="{{ url_for('booking') }}">Book Now</a>
+            <a class="btn btn-outline-light btn-lg" href="{{ url_for('gallery') }}">View Gallery</a>
         </div>
+
         <br><br>
-        <h2 class="text-center font-color: light mb-5">📸 Our Place</h2>
+        <h2 class="text-center text-light mb-5">📸 Our Place</h2>
         <div id="homeCarousel" class="carousel slide" data-bs-ride="carousel">
         <div class="carousel-inner">
             {% for img in images %}

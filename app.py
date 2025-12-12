@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, abo
 from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from werkzeug.security import check_password_hash
 from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin
 import smtplib, os
@@ -9,7 +10,6 @@ from email.message import EmailMessage
 from werkzeug.utils import secure_filename
 import gridfs
 from Email_Notification import *
-import base64
 from dotenv import load_dotenv
 import config
 load_dotenv()
@@ -17,6 +17,13 @@ load_dotenv()
 app = Flask(__name__)
 app.config["MONGO_URI"] = config.MONGO_URI # type: ignore
 app.config["SECRET_KEY"] = config.SECRET_KEY # type: ignore
+
+def format_ist(dt, fmt="%d-%m-%Y %I:%M %p IST"):
+    if dt is None:
+        return ""
+    return dt.astimezone(ZoneInfo("Asia/Kolkata")).strftime(fmt)
+
+app.jinja_env.filters['format_ist'] = format_ist
 
 mongo = PyMongo(app)
 db = mongo.db  # Ensure this line comes after app is fully configured
@@ -220,7 +227,7 @@ def booking():
         "check_out": check_out,
         "guests": guests,
         "note": note,
-        "created_at": datetime.now(timezone.utc).strftime("%I:%M %p"),  # 12-hour format
+        "created_at": datetime.now(ZoneInfo("Asia/Kolkata")),  # 12-hour format
         "status": "Pending"
     }
     result = db.bookings.insert_one(booking_doc) # type: ignore
@@ -605,7 +612,7 @@ def feedback():
             "rating": rating,
             "comments": comments,
             "photos": photo_ids,   # store GridFS IDs
-            "created_at": datetime.now(timezone.utc)
+            "created_at": datetime.now(ZoneInfo("Asia/Kolkata"))
         })
         
         # Notify Thanks email for the feedback to guests
@@ -746,7 +753,7 @@ def contact():
             "name": name,
             "email": email,
             "message": message,
-            "created_at": datetime.now(timezone.utc)
+            "created_at": datetime.now(ZoneInfo("Asia/Kolkata"))
         })
         
         # 🔔 Contact form submittion alert Notify admin by email with logo and reply buttons

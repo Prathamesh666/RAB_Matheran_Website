@@ -5,7 +5,6 @@ html {
 body {
       margin: 0;
       height: 100vh;
-      /* background: linear-gradient(#F5F5DC, #87CEEB);  cream to sky blue */
     }
 
     body.home-page {
@@ -150,6 +149,41 @@ header p {
   font-style: italic;
 }
 
+/* Table Styling */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+td form, td a, td button {
+  margin-right: 12px;
+}
+
+th {
+  background: #0b8a61; /* brand green */
+  color: #fff;
+  text-align: center;
+  padding: 12px;
+}
+
+td {
+  padding: 10px;
+  text-align: center;
+  align-items: center;
+}
+
+th:hover {
+  background-color: #e0e0e0;
+  cursor: pointer;
+}
+td:hover {
+  background-color: #cdeee4;   /* cell hover, darker */
+  cursor: pointer;
+}
+
 /* Navigation */
 nav {
   background: url('static\images\icons\Header.png');
@@ -239,7 +273,8 @@ section h2 {
   background-color: #71d61e;
   color: #fff;
   padding: 12px 25px;
-  border-radius: 5px;
+  border-radius: 12px;
+  margin: 1px;
   text-decoration: none;
   transition: background 0.3s ease;
 }

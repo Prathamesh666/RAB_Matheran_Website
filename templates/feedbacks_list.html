@@ -5,13 +5,17 @@
 
 <table class="table table-hover">
   <thead>
-    <tr> <th>Preference</th> <th>Name</th> <th>Rating</th> <th>Comments</th> <th>Photos</th> <th>Actions</th>
+    <tr> <th>Pref</th> <th>Date & Time</th> <th>Name</th> <th>Rating</th> <th>Comments</th> <th>Photos</th> <th>Actions</th>
     </tr>
   </thead>
   <tbody>
     {% for f in feedbacks %}
     <tr>
       <td>{{ loop.index }}</td>
+      <td>
+        {{ f.created_at.strftime("%d-%m-%Y") }} <br>
+        {{ f.created_at.strftime("%I:%M %p") }}
+      </td>
       <td>{{ f.name }}</td>
       <td>{{ f.rating }}/10</td>
       <td>{{ f.comments }}</td>

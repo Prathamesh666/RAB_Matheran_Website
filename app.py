@@ -636,7 +636,8 @@ def feedback(): # sourcery skip: last-if-guard
                 <body>
                 <div class="card">
                 <div class="logo">
-                <img src="cid:RAG_Logo" alt="Ranchoddas Arogya Bhavan Logo" />
+                <img src="https://ranchoddasarogyabhavanmatheran.onrender.com/static/images/icons/RAG_Logo.png" 
+                    alt="Ranchoddas Arogya Bhavan Logo" />
                 </div>
                     <h2>Thank you for your feedback</h2>
                     <p>Your thoughts help us improve our hospitality.</p>
@@ -648,8 +649,8 @@ def feedback(): # sourcery skip: last-if-guard
                 """
                 msg.add_alternative(html_body, subtype="html")
                 # Attach logo image inline
-                with open("static/images/icons/RAG_Logo.png", "rb") as img:
-                    msg.get_payload()[1].add_related(img.read(), maintype="image", subtype="png", cid="RAG_Logo") # type: ignore
+                #with open("static/images/icons/RAG_Logo.png", "rb") as img:
+                #    msg.get_payload()[1].add_related(img.read(), maintype="image", subtype="png", cid="RAG_Logo") # type: ignore
                     
                 with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server: # type: ignore
                     server.starttls()

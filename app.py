@@ -636,8 +636,7 @@ def feedback(): # sourcery skip: last-if-guard
                 <body>
                 <div class="card">
                 <div class="logo">
-                <img src="https://ranchoddasarogyabhavanmatheran.onrender.com/static/images/icons/RAG_Logo.png" 
-                    alt="Ranchoddas Arogya Bhavan Logo" />
+                <img src="https://ranchoddasarogyabhavanmatheran.onrender.com/static/images/icons/RAG_Logo.png" alt="Ranchoddas Arogya Bhavan Logo" />
                 </div>
                     <h2>Thank you for your feedback</h2>
                     <p>Your thoughts help us improve our hospitality.</p>

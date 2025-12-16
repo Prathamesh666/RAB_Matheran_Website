@@ -219,8 +219,7 @@ def gallery_edit():
 
         # Delete image (remove from DB and filesystem)
         elif action == "delete_image" and category_id:
-            filename = request.form.get("filename")
-            if filename:
+            if (filename := request.form.get("filename")):
                 try:
                     # Build full paths
                     file_path = os.path.join(upload_folder, filename)

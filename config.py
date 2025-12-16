@@ -11,6 +11,7 @@ SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASS = os.getenv("SMTP_PASS")
 
 SENDER_API_KEY = os.getenv("SENDER_API_KEY")
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
 
 TWILIO_SID = os.getenv("TWILIO_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")

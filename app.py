@@ -42,7 +42,10 @@ GALLERY_CATEGORIES = {
         "title": "Entrances",
         "images": [
             "Entrance_1.0.jpeg",
-            "Entrance_1.1.jpeg"
+            "Entrance_1.1.jpeg",
+            "Entrance_2.0.jpeg",
+            "Entrance_3.0.jpeg",
+            "Entrance_3.1.jpeg"
         ]
     },
     "hotel_view": {
@@ -57,18 +60,28 @@ GALLERY_CATEGORIES = {
             "Hotel_View_3.jpeg"
         ]
     },
+    "rooms": {
+        "title": "Rooms",
+        "images": [
+            "Bed_Room_2.0.jpeg",
+            "Bath_Room_1.0.jpeg"
+        ]
+    },
     "outside": {
         "title": "Outside Views",
         "images": [
             "Outside_Hotel_Railway_Track.jpeg",
             "Outside_Road_Track_Before_Hotel.jpeg",
+            "Outside_Hotel_Drink_Center.jpeg",
             "Welcome_To_Matheran.jpeg"
         ]
     },
     "signs": {
         "title": "Signboards",
         "images": [
-            "Ranchoddas_Arogya_Bhavan.jpeg"
+            "Ranchoddas_Arogya_Bhavan.jpeg",
+            "Since.jpeg",
+            "Pokemon_Location.jpeg"
         ]
     }
 }
@@ -161,7 +174,8 @@ def gallery_edit():
                 
                 db.categories.update_one( # type: ignore
                     {"_id": ObjectId(category_id)},
-                    {"$push": {"images": filename}}
+                    {"$push": {"images": {"filename": filename}
+                    }}
                 )
                 flash("Image uploaded and added.", "success")
             else:
@@ -172,15 +186,27 @@ def gallery_edit():
             filename = request.form.get("filename")
             db.categories.update_one( # type: ignore
                 {"_id": ObjectId(category_id)},
-                {"$pull": {"images": filename}}
+                {"$pull": {"images": {"filename": filename}}}
             )
             flash("Image deleted.", "info")
 
         return redirect(url_for("gallery_edit"))
 
     cats = list(db.categories.find().sort("created_at", -1)) # type: ignore
+    def normalize_images(images):
+        normalized = []
+        for img in images:
+            if isinstance(img, str):
+                normalized.append({"filename": img, "thumb": f"images/thumbs/{img}", "full": f"images/{img}"})
+            else:
+                normalized.append(img)
+        return normalized
+
     for c in cats:
-        c["images"] = sorted(c.get("images", []))
+        c["images"] = sorted(normalize_images(c.get("images", [])), key=lambda img: img["filename"])
+    #for c in cats:
+    #    c["images"] = sorted(c.get("images", []))
+
     return render_template("gallery_edit.html", categories=cats)
 
 # Booking create with validation and optional email confirmation

@@ -149,6 +149,7 @@
         <div class="col-md-6">
             <h3>📍 How to Reach</h3>
             <p class="lead">Before Union Bank & Local Market, Matheran Hill Station. Local horse rides, transport and walking paths connect the hotel to the main market and viewpoints. For long journeys, take the railway path.</p>
+            <p class="lead">Location: <a href="https://goo.gl/maps/QRtRGfmjcEEx5trm6?g_st=aw" target="_blank">View on Google Maps</a></p>
         </div>
         <div class="col-md-6">
             <h3>📞 Contact</h3>
@@ -159,13 +160,20 @@
         </div>
     </div>
     <div class="container"><br>
+        <img src="{{ url_for('static', filename='images/icons/RAB_Location.png') }}"
+            alt="RAB Location" class="img-fluid rounded Map hover-shadow mb-4"
+            style="max-width: auto; max-height: auto; align:center;"
+            data-bs-toggle="modal" data-bs-target="#imageModal"
+            data-full="{{ url_for('static', filename='images/icons/RAB_Location_Wide.png') }}">
+        
         <img src="{{ url_for('static', filename='images/Matheran_Map.jpeg') }}"
-            alt="Matheran Map" class="img-fluid rounded Map shadow mb-4" 
+            alt="Matheran Map" class="img-fluid rounded Map hover-shadow mb-4" 
             style="max-width: auto; height:auto; align:center;"
             data-bs-toggle="modal" data-bs-target="#imageModal"
-            data-full="{{ url_for('static', filename='images/Matheran_Map.jpeg') }}"><br><br>
+            data-full="{{ url_for('static', filename='images/Matheran_Map.jpeg') }}">
+        <br><br>
         <img src="{{ url_for('static', filename='images/icons/Atithidevo_Bhava.png') }}"
-            alt="Atithidevo Bhava" class="img-fluid rounded Map shadow"
+            alt="Atithidevo Bhava" class="img-fluid rounded Map hover-shadow  mb-4"
             style="max-width: auto; height:auto; align:center;"
             data-bs-toggle="modal" data-bs-target="#imageModal"
             data-full="{{ url_for('static', filename='images/icons/Atithidevo_Bhava.png') }}">

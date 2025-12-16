@@ -91,3 +91,49 @@ if (scrollBtn) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 }
+
+// Gallery Edit for delete confirmation
+  let targetForm = null;
+
+  // Capture which form triggered the modal
+  document.querySelectorAll('[data-bs-target="#confirmDeleteModal"]').forEach(btn => {
+    btn.addEventListener('click', function() {
+      targetForm = this.closest('form');
+    });
+  });
+
+  // When confirm button is clicked, submit the stored form
+  document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+    if (targetForm) {
+      targetForm.submit();
+    }
+  });
+
+//Lazy loading + modal script 
+document.addEventListener("DOMContentLoaded", function() {
+  // Lazy load images
+  const lazyImages = [].slice.call(document.querySelectorAll("img.lazy"));
+  if ("IntersectionObserver" in window) {
+    let lazyObserver = new IntersectionObserver(function(entries, observer) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          let img = entry.target;
+          img.src = img.dataset.src;
+          img.classList.remove("lazy");
+          lazyObserver.unobserve(img);
+        }
+      });
+    });
+    lazyImages.forEach(function(img) { lazyObserver.observe(img); });
+  } else {
+    lazyImages.forEach(function(img) { img.src = img.dataset.src; });
+  }
+
+  // Modal image handler
+  const modalImage = document.getElementById("modalImage");
+  document.querySelectorAll("[data-bs-target='#imageModal']").forEach(img => {
+    img.addEventListener("click", function() {
+      modalImage.src = this.getAttribute("data-full");
+    });
+  });
+});

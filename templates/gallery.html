@@ -9,7 +9,7 @@
     <div class="card h-100">
       <div class="row g-0">
         <div class="col-5">
-          <img src="{{ url_for('static', filename='images/thumbs/' + c.sample[0]) }}" class="img-fluid rounded-start" alt="{{ c.title }}" loading="lazy">
+          <img src="{{ url_for('static', filename='images/thumbs/' ~ c.sample[0]) }}" class="img-fluid rounded-start" alt="{{ c.title }}" loading="lazy">
         </div>
         <div class="col-7">
           <div class="card-body">

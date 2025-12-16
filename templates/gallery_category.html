@@ -8,13 +8,13 @@
   <div class="col-md-4 mb-3">
     <div class="card">
       <!-- Thumbnail triggers modal -->
-      <img src="{{ url_for('static', filename='images/thumbs/' ~ img) }}"
-          data-src="{{ url_for('static', filename='images/' ~ img) }}"
+      <img src="{{ url_for('static', filename='images/thumbs/' ~ img.filename) }}"
+          data-src="{{ url_for('static', filename='images/' ~ img.filename) }}"
           class="card-img-top lazy"
           alt="{{ img }}"
           data-bs-toggle="modal"
           data-bs-target="#imageModal"
-          data-full="{{ url_for('static', filename='images/' ~ img) }}">
+          data-full="{{ url_for('static', filename='images/' ~ img.filename) }}">
     </div>
   </div>
   {% endfor %}

@@ -9,6 +9,7 @@ import smtplib, os
 from email.message import EmailMessage
 from werkzeug.utils import secure_filename
 import gridfs
+from PIL import Image
 from Email_Notification import *
 from dotenv import load_dotenv
 import config
@@ -103,6 +104,15 @@ def index():
 def about():
     return render_template("about.html")
 
+def normalize_images(images):
+        normalized = []
+        for img in images:
+            if isinstance(img, str):
+                normalized.append({"filename": img, "thumb": f"images/thumbs/{img}", "full": f"images/{img}"})
+            else:
+                normalized.append(img)
+        return normalized
+
 PER_PAGE = 8  # images per page for category pages
 
 @app.route("/gallery")
@@ -130,17 +140,22 @@ def gallery_category(category):
     pages = (total + PER_PAGE - 1) // PER_PAGE
     start = (page - 1) * PER_PAGE
     end = start + PER_PAGE
-    page_images = images[start:end]
+    page_images = normalize_images(images[start:end])
     return render_template("gallery_category.html", category=category, title=meta["title"], images=page_images, page=page, pages=pages, total=total)
 
 # ------------------ ADMIN GALLERY EDIT ------------------
 # Gallery & Feedback allowed extentions
 ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif'}
+upload_folder = os.path.join(os.path.dirname(__file__), 'static', 'images')
 
 def allowed_file(filename):
     ext_ok = '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
     print("Checking file:", filename, "Allowed:", ext_ok)
     return ext_ok
+
+DST = os.path.join(upload_folder, "thumbs")
+os.makedirs(DST, exist_ok=True)
+sizes = (420, 300)
 
 @app.route("/gallery/edit", methods=["GET", "POST"])
 @login_required
@@ -167,19 +182,40 @@ def gallery_edit():
             flash("Category deleted.", "info")
 
         # Add image (upload file)
-        elif action == "add_image" and category_id and "file" in request.files:
-            file = request.files["file"]
-            if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename) # type: ignore
-                
-                db.categories.update_one( # type: ignore
-                    {"_id": ObjectId(category_id)},
-                    {"$push": {"images": {"filename": filename}
-                    }}
-                )
-                flash("Image uploaded and added.", "success")
-            else:
-                flash("Invalid file type.", "danger")
+        #elif action == "add_image" and category_id and "file" in request.files:
+        elif action == "add_image" and category_id and "file[]" in request.files: 
+            files = request.files.getlist("file[]") # list of uploaded files
+            #file = request.files["file"]
+
+            for f in files: 
+                if f and allowed_file(f.filename):
+                    filename = secure_filename(f.filename) # type: ignore
+
+                    # Save uploaded file to the images folder first
+                    src_path = os.path.join(upload_folder, filename)
+                    dst_path = os.path.join(DST, filename)
+                    try:
+                        # ensure destination folder exists
+                        os.makedirs(DST, exist_ok=True)
+                        # save the original uploaded file
+                        f.save(src_path)
+                        # create thumbnail from saved file
+                        with Image.open(src_path) as im:
+                            im.thumbnail(sizes)
+                            im.save(dst_path, optimize=True, quality=85)
+                    except Exception as e:
+                        app.logger.exception("Failed to process uploaded image %s: %s", filename, e)
+                        flash("Failed to process uploaded image.", "danger")
+                        continue
+
+                    db.categories.update_one( # type: ignore
+                        {"_id": ObjectId(category_id)},
+                        {"$push": {"images": {"filename": filename}
+                        }}
+                    )
+                    flash("Image uploaded and added.", "success")
+                else:
+                    flash("Invalid file type.", "danger")
 
         # Delete image (remove from DB and filesystem)
         elif action == "delete_image" and category_id:
@@ -193,14 +229,6 @@ def gallery_edit():
         return redirect(url_for("gallery_edit"))
 
     cats = list(db.categories.find().sort("created_at", -1)) # type: ignore
-    def normalize_images(images):
-        normalized = []
-        for img in images:
-            if isinstance(img, str):
-                normalized.append({"filename": img, "thumb": f"images/thumbs/{img}", "full": f"images/{img}"})
-            else:
-                normalized.append(img)
-        return normalized
 
     for c in cats:
         c["images"] = sorted(normalize_images(c.get("images", [])), key=lambda img: img["filename"])

@@ -220,11 +220,26 @@ def gallery_edit():
         # Delete image (remove from DB and filesystem)
         elif action == "delete_image" and category_id:
             filename = request.form.get("filename")
-            db.categories.update_one( # type: ignore
-                {"_id": ObjectId(category_id)},
-                {"$pull": {"images": {"filename": filename}}}
-            )
-            flash("Image deleted.", "info")
+            if filename:
+                try:
+                    # Build full paths
+                    file_path = os.path.join(upload_folder, filename)
+                    dst_path = os.path.join(DST, filename)
+
+                    # Remove files if they exist
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+                    if os.path.exists(dst_path):
+                        os.remove(dst_path)
+
+                    db.categories.update_one( # type: ignore
+                        {"_id": ObjectId(category_id)},
+                        {"$pull": {"images": {"filename": filename}}}
+                    )
+                    flash("Image deleted.", "info")
+
+                except Exception as e:
+                    flash(f"Error deleting image: {e}", "danger")
 
         return redirect(url_for("gallery_edit"))
 

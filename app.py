@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 from werkzeug.security import check_password_hash
 from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin
 import smtplib, os
+from DCIC import *
 from email.message import EmailMessage
 from werkzeug.utils import secure_filename
 import gridfs
@@ -145,7 +146,27 @@ def gallery_category(category):
 
 # ------------------ ADMIN GALLERY EDIT ------------------
 # Gallery & Feedback allowed extentions
-ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif'}
+ALLOWED_EXTENSIONS = { 
+        # Common raster formats 
+        'jpg', 'jpeg', # Standard photo formats 
+        'png', # Transparent graphics 
+        'gif', # Animations 
+        'bmp', # Bitmap images 
+        'tiff', 'tif', # High-quality printing 
+        'webp', # Modern web format 
+        'heic', 'heif', # iPhone photos 
+        
+        # Vector format 
+        'svg', # Vector graphics
+        
+        # RAW formats (camera-specific) 
+        'cr2', # Canon RAW 
+        'nef', # Nikon RAW 
+        'arw', # Sony RAW 
+        'orf', # Olympus RAW 
+        'rw2', # Panasonic RAW 
+        'dng' # Adobe Digital Negative (universal RAW) 
+        }
 upload_folder = os.path.join(os.path.dirname(__file__), 'static', 'images')
 
 def allowed_file(filename):
@@ -664,12 +685,42 @@ def feedback(): # sourcery skip: last-if-guard
         if 'photos' in request.files:
             photos = request.files.getlist('photos')
             for photo in photos:
-                if photo and allowed_file(photo.filename):
-                    file_id = fs.put(photo, filename=secure_filename(photo.filename)) # type: ignore
+                # ensure we have a usable filename before proceeding
+                filename_raw = (getattr(photo, "filename", "") or "").strip()
+                if not photo or not filename_raw or not allowed_file(filename_raw):
+                    if filename_raw:
+                        app.logger.debug("Skipping file due to invalid type or disallowed extension: %s", filename_raw)
+                    else:
+                        app.logger.debug("Skipping file with empty filename object")
+                    continue
+
+                try:
+                    # safely extract extension from the sanitized filename
+                    if '.' in filename_raw:
+                        ext = filename_raw.rsplit('.', 1)[1].lower()
+                    else:
+                        ext = ""
+
+                    if ext in ['heic', 'heif', 'tiff', 'tif', 'cr2', 'nef', 'arw', 'orf', 'rw2', 'dng']:
+                        converted = convert_to_jpg(photo, ext)
+                        filename = secure_filename(filename_raw.rsplit('.', 1)[0] + ".jpg")
+                        file_id = fs.put(converted, filename=filename)
+                    else:
+                        filename = secure_filename(filename_raw)
+                        file_id = fs.put(photo, filename=filename)
+
                     photo_ids.append(str(file_id))
+
+
+                except Exception as e:
+                    app.logger.exception(f"Failed to process photo %s: %s", filename_raw, e)
+                    flash(f"Could not process {filename_raw}. Skipped.", "warning")
+                        
+        photo_ids = list(set(photo_ids))  # remove duplicates
 
         db.feedbacks.insert_one({ # type: ignore
             "name": name,
+            "email": email,
             "rating": rating,
             "comments": comments,
             "photos": photo_ids,   # store GridFS IDs
@@ -708,8 +759,8 @@ def feedback(): # sourcery skip: last-if-guard
                 </div>
                     <h2>Thank you for your feedback</h2>
                     <p>Your thoughts help us improve our hospitality.</p>
-                    <p>📍 Location: Before Union Bank & Local Market, Matheran Hill Station<br>
-                        🌐 Website: <a href="https://www.ranchoddasbhavan.com">www.ranchoddasbhavan.com</a></p>
+                    <p>📍 Location: Before Union Bank & Local Market, near Big Stone Point, Matheran Hill Station<br>
+                        🌐 Website: <a href="https://ranchoddasarogyabhavanmatheran.onrender.com">https://ranchoddasarogyabhavanmatheran.onrender.com</a></p>
                 </div>
                 </body>
                 </html>
@@ -761,13 +812,45 @@ def feedback_edit(fb_id):
         comments = request.form.get("comments", "")
 
         photo_ids = fb.get("photos", [])
+        photo_ids = list(set(photo_ids))  # remove duplicates
+        
+        if rating < 0 or rating > 10:
+            flash("Rating must be between 0 and 10.", "danger")
+            return redirect(url_for("feedback_edit", fb_id=fb_id))
 
         if 'photos' in request.files:
             photos = request.files.getlist('photos')
             for photo in photos:
-                if photo and allowed_file(photo.filename):
-                    file_id = fs.put(photo, filename=secure_filename(photo.filename)) # type: ignore
+                # Safely obtain filename and skip invalid entries
+                filename_raw = (getattr(photo, "filename", "") or "").strip()
+                if not photo or not filename_raw or not allowed_file(filename_raw):
+                    if filename_raw:
+                        app.logger.debug("Skipping file due to invalid type or disallowed extension: %s", filename_raw)
+                    else:
+                        app.logger.debug("Skipping file with empty filename object")
+                    continue
+                try:
+                    # Extract extension safely
+                    if '.' in filename_raw:
+                        ext = filename_raw.rsplit('.', 1)[1].lower()
+                    else:
+                        ext = ""
+
+                    if ext in ['heic', 'heif', 'tiff', 'tif', 'cr2', 'nef', 'arw', 'orf', 'rw2', 'dng']:
+                        converted = convert_to_jpg(photo, ext)
+                        filename = secure_filename(filename_raw.rsplit('.', 1)[0] + ".jpg")
+                        file_id = fs.put(converted, filename=filename)
+                    else:
+                        filename = secure_filename(filename_raw)
+                        file_id = fs.put(photo, filename=filename)
+
                     photo_ids.append(str(file_id))
+
+                except Exception as e:
+                    app.logger.exception(f"Failed to process photo {filename_raw}: {e}")
+                    flash(f"Could not process {filename_raw}. Skipped.", "warning")
+                        
+        photo_ids = list(set(photo_ids))  # remove duplicates
 
         db.feedbacks.update_one( # type: ignore
             {"_id": ObjectId(fb_id)},
@@ -1036,7 +1119,7 @@ def page_not_found(e):
     return render_template("404.html"), 404
 
 if __name__ == "__main__":
-    #app.run(host='0.0.0.0', ssl_context=('cert.pem', 'key.pem'), debug=True) 
+    app.run(host='0.0.0.0', ssl_context=('cert.pem', 'key.pem'), debug=True) 
     #app.run(host='0.0.0.0', debug=True)
-    port = int(os.environ.get("PORT", 5000))  # Render sets PORT automatically
-    app.run(host="0.0.0.0", port=port, debug=False)
+    #port = int(os.environ.get("PORT", 5000))  # Render sets PORT automatically
+    #app.run(host="0.0.0.0", port=port, debug=False)

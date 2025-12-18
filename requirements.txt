@@ -8,3 +8,6 @@ werkzeug==2.2.3
 #twilio==9.8.7
 sender==0.3
 requests
+pillow==12.0.0 
+pillow-heif==1.1.1
+rawpy==0.25.1

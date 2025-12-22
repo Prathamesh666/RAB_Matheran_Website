@@ -109,7 +109,7 @@ if (scrollBtn) {
     }
   });
 
-//Lazy loading + modal script 
+//Lazy loading + modal image script 
 document.addEventListener("DOMContentLoaded", function() {
   // Lazy load images
   const lazyImages = [].slice.call(document.querySelectorAll("img.lazy"));

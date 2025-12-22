@@ -1,18 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
 <body class="home-page">
-
-<!-- Hero Section -->
-<section class="hero bg-dark text-white text-center d-flex align-items-center" 
-    style="background:url('{{ url_for('static', filename='images/hero.jpeg') }}') top/cover no-repeat; height: auto;">
-  <div class="container" data-aos="fade-down">
-    <h1 class="display-5 fw-bold">Welcome to Seth Hiralal Ranchoddas Arogya Bhavan</h1>
-    <p class="lead mt-3">In our house, the guest is akin to God.<br>
-    A peaceful stay in Matheran Hill Station, close to forest nature and local attractions.</p>
-    <div class="mt-4 d-flex justify-content-center flex-wrap gap-2">
-      <a class="btn btn-warning btn-lg" href="{{ url_for('booking') }}" data-aos="zoom-in" data-aos-delay="100">Book Now</a>
-      <a class="btn btn-outline-light btn-lg" href="{{ url_for('gallery') }}" data-aos="zoom-in" data-aos-delay="200">View Gallery</a>
-    </div>
+    <!-- Hero Section -->
+    <section class="hero bg-dark text-white text-center d-flex align-items-center" 
+        style="background:url('{{ url_for('static', filename='images/hero.jpeg') }}') top/cover no-repeat; height: auto;">
+    <div class="container">
+        <h1 class="display-5 fw-bold">Welcome to Seth Hiralal Ranchoddas Munim Arogya Bhavan</h1>
+        <p class="lead mt-3">In our house, the guest is akin to God.<br>
+        A peaceful stay in Matheran Hill Station, close to forest nature and local attractions.</p>
+        <div class="mt-4 d-flex justify-content-center flex-wrap gap-2">
+            <a class="btn btn-warning btn-lg" href="{{ url_for('booking') }}">Book Now</a>
+            <a class="btn btn-outline-light btn-lg" href="{{ url_for('gallery') }}">View Gallery</a>
+        </div>
 
     <br><br>
     <h2 class="text-center text-light mb-5" data-aos="fade-up">📸 Our Place</h2>

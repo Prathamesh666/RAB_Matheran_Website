@@ -29,29 +29,35 @@
                       class="img-thumbnail"
                       style="height:60px; margin:5px; cursor:pointer;"
                       data-bs-toggle="modal"
-                      data-bs-target="#carouselModal{{ loop.index }}">
+                      data-bs-target="#carouselModal{{ f._id }}"
+                      data-photo-index="{{ loop.index0 }}">
               {% endfor %}
             </div>
 
             <!-- Carousel Modal -->
-            <div class="modal fade" id="carouselModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
+            <div class="modal fade" id="carouselModal{{ f._id }}" tabindex="-1" aria-hidden="true">
               <div class="modal-dialog modal-dialog-centered modal-lg">
                 <div class="modal-content">
                   <div class="modal-body">
-                    <div id="carousel{{ loop.index }}" class="carousel slide" data-bs-ride="carousel">
+                    <div id="carousel{{ f._id }}" class="carousel carousel-fade" data-bs-ride="carousel">
                       <div class="carousel-inner">
                         {% for photo_id in f.photos %}
                           <div class="carousel-item {% if loop.first %}active{% endif %}">
                             <img src="{{ url_for('feedback_photo', file_id=photo_id) }}"
                               class="d-block w-100" alt="Feedback Photo"
-                              style="max-height:500px; object-fit:contain;">
+                              style="max-height:90vh; object-fit:contain;">
+                          
+                            <!-- Caption --> 
+                            <div class="carousel-caption d-none d-md-block"> 
+                              <p>{{ f.name }}: Photo {{ loop.index }} of {{ f.photos|length }}</p> 
+                            </div> 
                           </div>
                         {% endfor %}
                       </div>
-                      <button class="carousel-control-prev" type="button" data-bs-target="#carousel{{ loop.index }}" data-bs-slide="prev">
+                      <button class="carousel-control-prev" type="button" data-bs-target="#carousel{{ f._id }}" data-bs-slide="prev">
                         <span class="carousel-control-prev-icon"></span>
                       </button>
-                      <button class="carousel-control-next" type="button" data-bs-target="#carousel{{ loop.index }}" data-bs-slide="next">
+                      <button class="carousel-control-next" type="button" data-bs-target="#carousel{{ f._id }}" data-bs-slide="next">
                         <span class="carousel-control-next-icon"></span>
                       </button>
                     </div>
@@ -76,5 +82,24 @@
     {% endfor %}
   </tbody>
 </table>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('.img-thumbnail').forEach(function (thumb) {
+    thumb.addEventListener('click', function () {
+      const targetModal = document.querySelector(this.dataset.bsTarget);
+      const carousel = targetModal.querySelector('.carousel');
+      const index = parseInt(this.dataset.photoIndex, 10);
+
+      // Wait until modal is shown, then move carousel
+      targetModal.addEventListener('shown.bs.modal', function () {
+        const bsCarousel = bootstrap.Carousel.getInstance(carousel) 
+                          || new bootstrap.Carousel(carousel);
+        bsCarousel.to(index);
+      }, { once: true });
+    });
+  });
+});
+</script>
+
 </body>
 {% endblock %}

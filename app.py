@@ -88,6 +88,21 @@ GALLERY_CATEGORIES = {
     }
 }
 
+# UTC To IST Conversion of given list
+def convert_list_to_IST(records):
+    for r in records: 
+        try:
+            if "created_at" in r: 
+                # Treat naive datetime as UTC, then convert to IST 
+                if r["created_at"].tzinfo is None: 
+                    r["created_at"] = r["created_at"].replace(tzinfo=ZoneInfo("UTC")) 
+                r["created_at"] = r["created_at"].astimezone(ZoneInfo("Asia/Kolkata"))
+        except Exception as e: # Log or handle the error gracefully 
+            print(f"Error converting created_at for feedback {r.get('_id', '')}: {e}") 
+            # Optionally, leave the original value untouched 
+            continue
+    return records
+
 @app.route("/")
 def index():
     # Build combined list from entrances then hotel_view
@@ -463,6 +478,7 @@ def booking():  # sourcery skip: last-if-guard
 @login_required
 def bookings_list():
     bookings = list(db.bookings.find().sort("created_at", 1)) # type: ignore
+    convert_list_to_IST(bookings)
     return render_template("bookings_list.html", bookings=bookings)
 
 @app.route("/booking/accept/<booking_id>", methods=["POST"])
@@ -797,6 +813,7 @@ def feedback_photo(file_id):
 @login_required
 def feedbacks_list():
     feedbacks = list(db.feedbacks.find().sort("created_at", 1)) # type: ignore
+    convert_list_to_IST(feedbacks)
     return render_template("feedbacks_list.html", feedbacks=feedbacks)
 
 @app.route("/feedback/edit/<fb_id>", methods=["GET", "POST"])
@@ -971,6 +988,7 @@ def contact():  # sourcery skip: last-if-guard
 @login_required
 def contact_list():
     contacts = list(db.contacts.find().sort("created_at", 1)) # type: ignore
+    convert_list_to_IST(contacts)
     return render_template("contact_list.html", contacts=contacts)
 
 @app.route("/contacts/edit/<contact_id>", methods=["GET", "POST"])

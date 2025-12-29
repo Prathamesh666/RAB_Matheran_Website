@@ -163,7 +163,7 @@ def gallery_category(category):
 # Gallery & Feedback allowed extentions
 ALLOWED_EXTENSIONS = { 
         # Common raster formats 
-        'jpg', 'jpeg', # Standard photo formats 
+        'jpg', 'jpeg', 'jfif', # Standard photo formats 
         'png', # Transparent graphics 
         'gif', # Animations 
         'bmp', # Bitmap images 
@@ -217,41 +217,55 @@ def gallery_edit():
             db.categories.delete_one({"_id": ObjectId(category_id)}) # pyright: ignore[reportOptionalMemberAccess]
             flash("Category deleted.", "info")
 
-        # Add image (upload file)
-        #elif action == "add_image" and category_id and "file" in request.files:
-        elif action == "add_image" and category_id and "file[]" in request.files: 
-            files = request.files.getlist("file[]") # list of uploaded files
-            #file = request.files["file"]
+        # Add image (upload file)                    
+        elif action == "add_image" and category_id and "file[]" in request.files:
+            files = request.files.getlist("file[]")  # list of uploaded files
 
-            for f in files: 
-                if f and allowed_file(f.filename):
-                    filename = secure_filename(f.filename) # type: ignore
+            for f in files:
+                # Safely obtain filename and skip invalid entries
+                filename_raw = (getattr(f, "filename", "") or "").strip()
+                if not f or not filename_raw or not allowed_file(filename_raw):
+                    if filename_raw:
+                        app.logger.debug("Skipping file due to invalid type or disallowed extension: %s", filename_raw)
+                    else:
+                        app.logger.debug("Skipping file with empty filename object")
+                    continue
 
-                    # Save uploaded file to the images folder first
-                    src_path = os.path.join(upload_folder, filename)
-                    dst_path = os.path.join(DST, filename)
-                    try:
-                        # ensure destination folder exists
+                try:
+                    # Extract extension safely
+                    ext = filename_raw.rsplit('.', 1)[1].lower() if '.' in filename_raw else ""
+
+                    # Convert RAW/HEIC/TIFF formats to JPG
+                    if ext in ['heic', 'heif', 'tiff', 'tif', 'cr2', 'nef', 'arw', 'orf', 'rw2', 'dng']:
+                        converted = convert_to_jpg(f, ext)
+                        filename = secure_filename(filename_raw.rsplit('.', 1)[0] + ".jpg")
+                        src_path = os.path.join(upload_folder, filename)
+                        dst_path = os.path.join(DST, filename)
                         os.makedirs(DST, exist_ok=True)
-                        # save the original uploaded file
+                        with open(src_path, "wb") as img_file:
+                            img_file.write(converted.getvalue())
+                    else:
+                        filename = secure_filename(filename_raw)
+                        src_path = os.path.join(upload_folder, filename)
+                        dst_path = os.path.join(DST, filename)
+                        os.makedirs(DST, exist_ok=True)
                         f.save(src_path)
-                        # create thumbnail from saved file
-                        with Image.open(src_path) as im:
-                            im.thumbnail(sizes)
-                            im.save(dst_path, optimize=True, quality=85)
-                    except Exception as e:
-                        app.logger.exception("Failed to process uploaded image %s: %s", filename, e)
-                        flash("Failed to process uploaded image.", "danger")
-                        continue
 
-                    db.categories.update_one( # type: ignore
+                    # Create thumbnail from saved file
+                    with Image.open(src_path) as im:
+                        im.thumbnail(sizes)
+                        im.save(dst_path, optimize=True, quality=85)
+
+                    # Save filename in DB (same format as before)
+                    db.categories.update_one(  # type: ignore
                         {"_id": ObjectId(category_id)},
-                        {"$push": {"images": {"filename": filename}
-                        }}
+                        {"$push": {"images": {"filename": filename}}}
                     )
                     flash("Image uploaded and added.", "success")
-                else:
-                    flash("Invalid file type.", "danger")
+
+                except Exception as e:
+                    app.logger.exception(f"Failed to process image {filename_raw}: {e}")
+                    flash(f"Could not process {filename_raw}. Skipped.", "warning")
 
         # Delete image (remove from DB and filesystem)
         elif action == "delete_image" and category_id:
@@ -712,10 +726,7 @@ def feedback(): # sourcery skip: last-if-guard
 
                 try:
                     # safely extract extension from the sanitized filename
-                    if '.' in filename_raw:
-                        ext = filename_raw.rsplit('.', 1)[1].lower()
-                    else:
-                        ext = ""
+                    ext = filename_raw.rsplit('.', 1)[1].lower() if '.' in filename_raw else ""
 
                     if ext in ['heic', 'heif', 'tiff', 'tif', 'cr2', 'nef', 'arw', 'orf', 'rw2', 'dng']:
                         converted = convert_to_jpg(photo, ext)
@@ -727,9 +738,8 @@ def feedback(): # sourcery skip: last-if-guard
 
                     photo_ids.append(str(file_id))
 
-
                 except Exception as e:
-                    app.logger.exception(f"Failed to process photo %s: %s", filename_raw, e)
+                    app.logger.exception(f"Failed to process photo {filename_raw}: {e}")
                     flash(f"Could not process {filename_raw}. Skipped.", "warning")
                         
         photo_ids = list(set(photo_ids))  # remove duplicates
@@ -848,10 +858,7 @@ def feedback_edit(fb_id):
                     continue
                 try:
                     # Extract extension safely
-                    if '.' in filename_raw:
-                        ext = filename_raw.rsplit('.', 1)[1].lower()
-                    else:
-                        ext = ""
+                    ext = filename_raw.rsplit('.', 1)[1].lower() if '.' in filename_raw else ""
 
                     if ext in ['heic', 'heif', 'tiff', 'tif', 'cr2', 'nef', 'arw', 'orf', 'rw2', 'dng']:
                         converted = convert_to_jpg(photo, ext)

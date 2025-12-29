@@ -32,10 +32,17 @@
         <p class="card-text"><small class="text-muted">{{ c.images|length }} photos</small></p>
 
         <!-- Delete Category -->
-        <form method="POST" class="mb-3">
+        <form method="POST" class="mb-3" id="form-cat-{{ c._id }}">
           <input type="hidden" name="action" value="delete_category">
           <input type="hidden" name="category_id" value="{{ c._id }}">
-          <button class="btn btn-sm btn-danger">Delete Category</button>
+          <button type="button" class="btn btn-sm btn-danger"
+                  data-bs-toggle="modal"
+                  data-bs-target="#confirmDeleteModal"
+                  data-type="category"
+                  data-name="{{ c.title }}"
+                  data-form-id="form-cat-{{ c._id }}">
+            Delete Category
+          </button>
         </form>
 
         <!-- Upload Image -->
@@ -61,7 +68,8 @@
               <!-- Thumbnail preview -->
               <img src="{{ url_for('static', filename='images/thumbs/' ~ img.filename) }}"
                 data-src="{{ url_for('static', filename='images/' ~ img.filename) }}"
-                class="card-img-top lazy"
+                class="card-img-top"
+                loading="lazy"
                 alt="{{ img.filename }}"
                 data-bs-toggle="modal"
                 data-bs-target="#imageModal" width="60" height="60"
@@ -70,15 +78,16 @@
               <a href="{{ url_for('static', filename='images/' ~ img.filename) }}" target="_blank">  {{ img.filename }}</a>
             </div>
             <!-- Delete button triggers modal -->
-            <form method="POST" class="delete-form" style="margin:0;">
+            <form method="POST" class="delete-form" id="form-img-{{ loop.index }}">
               <input type="hidden" name="action" value="delete_image">
               <input type="hidden" name="category_id" value="{{ c._id }}">
               <input type="hidden" name="filename" value="{{ img.filename }}">
-              <button class="btn btn-sm btn-outline-danger"
+              <button type="button" class="btn btn-sm btn-outline-danger"
               data-bs-toggle="modal" 
               data-bs-target="#confirmDeleteModal"
-              data-filename="{{ img.filename }}"
-              data-form-id="form-{{ loop.index }}">Delete</button>
+              data-type="image"
+              data-name="{{ img.filename }}"
+              data-form-id="form-img-{{ loop.index }}">Delete</button>
             </form>
           </li>
           {% endfor %}
@@ -100,16 +109,16 @@
   </div>
 </div>
 
-<!-- Confirmation Modal -->
+<!-- Unified Delete Modal -->
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="confirmDeleteLabel">Confirm Delete</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        Are you sure you want to delete <strong id="fileToDelete"></strong>?
+        Are you sure you want to delete <span id="deleteType"></span> <span id="fileToDelete"></span>?
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -119,24 +128,46 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  let targetForm = null;
+  const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+const deleteType = document.getElementById('deleteType');
+const fileToDelete = document.getElementById('fileToDelete');
+const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
 
-  // Capture which form triggered the modal and set filename text
-  document.querySelectorAll('[data-bs-target="#confirmDeleteModal"]').forEach(btn => {
-    btn.addEventListener('click', function() {
-      targetForm = this.closest('form');
-      const filename = this.getAttribute('data-filename');
-      document.getElementById('fileToDelete').textContent = filename;
-    });
+// Prevent accidental form submission
+document.querySelectorAll('.delete-form button').forEach(btn => {
+  btn.type = "button";
+  btn.addEventListener('click', e => e.preventDefault());
+});
+
+// Handle modal show
+confirmDeleteModal.addEventListener('show.bs.modal', function (event) {
+  const button = event.relatedTarget;
+  const type = button.getAttribute('data-type');   // "image" or "category"
+  const name = button.getAttribute('data-name');   // filename or category name
+  const formId = button.getAttribute('data-form-id');
+
+  deleteType.textContent = type;
+  fileToDelete.textContent = name;
+
+  confirmDeleteBtn.onclick = function () {
+    document.getElementById(formId).submit();
+  };
+});
+
+  // Image preview modal
+  const imageModal = document.getElementById('imageModal');
+  imageModal.addEventListener('show.bs.modal', function (event) {
+    const img = event.relatedTarget; // Thumbnail that triggered the modal
+    const fullSrc = img.getAttribute('data-full');
+    modalImage.src = fullSrc;
   });
 
-  // When confirm button is clicked, submit the stored form
-  document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
-    if (targetForm) {
-      targetForm.submit();
-    }
+  // Reset modal image when closed
+  imageModal.addEventListener('hidden.bs.modal', function () {
+    modalImage.src = "";
   });
 </script>
-</body>
+<body>
 {% endblock %}

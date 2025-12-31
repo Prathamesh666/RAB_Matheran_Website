@@ -99,6 +99,11 @@ body {
       border: 0; border-radius: 12px; /* matches container rounding */ 
     }
 
+    body.modal-open {
+      overflow: hidden;   /* Prevent background scroll */
+      padding-right: 0 !important; /* Avoid scrollbar jump */
+    }
+
     .leaf {
       position: absolute;
       width: 20px;
@@ -316,6 +321,55 @@ section h2 {
 }
 
 .cta-buttons { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; text-align: center; justify-content: center; }
+
+/* Feedback Modal Styling */
+.modal-content {
+  background: #fdfdfd; /* soft white for readability */
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  border: none;
+}
+
+.modal-header {
+  background: linear-gradient(135deg, #007bff, #00c6ff);
+  color: #fff;
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+}
+
+.modal-title {
+  font-weight: 600;
+  font-size: 1.25rem;
+  letter-spacing: 0.5px;
+}
+
+.modal-body {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #333; /* dark text for contrast */
+  padding: 1.5rem;
+}
+
+.modal-body p {
+  margin-bottom: 1rem;
+}
+
+.modal-body img {
+  max-width: 100%;
+  border-radius: 8px;
+  margin-top: 1rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.modal-footer {
+  border-top: none;
+  padding: 1rem;
+}
+
+.btn-close {
+  filter: invert(1); /* makes close button visible on dark header */
+}
+
 /* Take Me Home Modal */
 /* Backdrop with subtle glow */
 .modal-backdrop.show {

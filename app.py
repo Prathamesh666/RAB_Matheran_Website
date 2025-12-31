@@ -114,7 +114,11 @@ def index():
                 combined.append(im)
     # Limit to max 10
     carousel_images = combined[:10]
-    return render_template("index.html", images=carousel_images, page_class="home-page")
+    # Query top 5 feedbacks from MongoDB sorted by rating desc and created_at desc as tie-breaker
+    top_feedbacks = list(db.feedbacks.find({"featured": True}).sort([("rating", -1), ("created_at", -1)]).limit(6))  # type: ignore
+    convert_list_to_IST(top_feedbacks)
+
+    return render_template("index.html", images=carousel_images, page_class="home-page", feedbacks=top_feedbacks)
 
 @app.route("/about")
 def about():
@@ -465,25 +469,34 @@ def booking():  # sourcery skip: last-if-guard
             app.logger.exception("Failed to send admin notification email")
 
     # 📱 Optional: Notify admin by SMS (Twilio)
-    if getattr(config, "TWILIO_SID", None) and getattr(config, "ADMIN_PHONE", None):
-        try:
-            from twilio.rest import Client
-            client = Client(config.TWILIO_SID, config.TWILIO_AUTH_TOKEN) # type: ignore
-            client.messages.create(
-                body=f"Dear Admin You Have A New Booking Alert.\n\n"
-                f"Booking ID: {booking_id}\n"
-                f"Name: {name}\n"
-                f"Phone: {phone}\n"
-                f"Email: {email}\n"
-                f"Check-in: {check_in} to Check-out: {check_out}\n"
-                f"Guests: {guests}\n"
-                f"Note: {note}\n\n"
-                f"Please check the bookings list on the website to update the status.",
-                from_=config.TWILIO_PHONE, # type: ignore
-                to=config.ADMIN_PHONE if config.ADMIN_PHONE is not None else "" # type: ignore
-            )
-        except Exception:
-            app.logger.exception("Failed to send SMS notification")
+        if getattr(config, "TWILIO_SID", None) and getattr(config, "ADMIN_PHONE", None):
+            try:
+                try:
+                    import importlib
+                    module = importlib.import_module("twilio.rest")
+                    Client = getattr(module, "Client", None)
+                except Exception:
+                    Client = None
+                    
+                if Client is None:
+                    app.logger.warning("Twilio package not installed; SMS notification skipped")
+                else:
+                    client = Client(config.TWILIO_SID, config.TWILIO_AUTH_TOKEN) # type: ignore
+                    client.messages.create(
+                        body=f"Dear Admin You Have A New Booking Alert.\n\n"
+                        f"Booking ID: {booking_id}\n"
+                        f"Name: {name}\n"
+                        f"Phone: {phone}\n"
+                        f"Email: {email}\n"
+                        f"Check-in: {check_in} to Check-out: {check_out}\n"
+                        f"Guests: {guests}\n"
+                        f"Note: {note}\n\n"
+                        f"Please check the bookings list on the website to update the status.",
+                        from_=config.TWILIO_PHONE, # type: ignore
+                        to=config.ADMIN_PHONE if config.ADMIN_PHONE is not None else "" # type: ignore
+                    )
+            except Exception:
+                app.logger.exception("Failed to send SMS notification")
 
     return redirect(url_for("bookings_list"))
 
@@ -824,7 +837,28 @@ def feedback_photo(file_id):
 def feedbacks_list():
     feedbacks = list(db.feedbacks.find().sort("created_at", 1)) # type: ignore
     convert_list_to_IST(feedbacks)
-    return render_template("feedbacks_list.html", feedbacks=feedbacks)
+    
+    # Aggregate rating counts 
+    pipeline = [ {"$match": {"rating": {"$in": [6, 7, 8, 9, 10]}}}, {"$group": {"_id": "$rating", "count": {"$sum": 1}}}, {"$sort": {"_id": -1}}, ] 
+    rating_data = list(db.feedbacks.aggregate(pipeline)) 
+    rating_counts = [0, 0, 0, 0, 0] # [10,9,8,7,6] 
+    for item in rating_data: 
+        idx = 10 - item["_id"] 
+        if 0 <= idx <= 4: 
+            rating_counts[idx] = item["count"]
+
+    return render_template("feedbacks_list.html", feedbacks=feedbacks, rating_counts=rating_counts)
+
+@app.route("/feedbacks/<id>/toggle", methods=["POST"])
+@login_required
+def toggle_featured_feedback(id):
+    data = request.get_json()
+    new_status = bool(data.get("featured", False))  # True or False
+    db.feedbacks.update_one(
+        {"_id": ObjectId(id)},
+        {"$set": {"featured": new_status}}
+    )
+    return {"success": True}
 
 @app.route("/feedback/edit/<fb_id>", methods=["GET", "POST"])
 @login_required

@@ -3,6 +3,95 @@
 <body class="feedback-page">
 <h2>Customer Feedback</h2>
 
+<h4 class="text-center mb-4">📊 Rating Distribution</h4>
+<div class="chart-wrap">
+  <canvas id="ratingChart" height="420"></canvas>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('ratingChart').getContext('2d');
+  const ratingCounts = {{ rating_counts | tojson }}; // e.g. [20, 15, 10, 5, 2]
+
+  // Convert counts to percentages
+  const total = ratingCounts.reduce((a, b) => a + b, 0);
+  const ratingPercentages = total > 0 
+    ? ratingCounts.map(val => ((val / total) * 100).toFixed(1)) 
+    : [0,0,0,0,0];
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['10/10','9/10','8/10','7/10','6/10'],
+      datasets: [{
+        label: 'Percentage of Feedbacks',
+        data: ratingPercentages,
+        backgroundColor: ['#28a745','#17a2b8','#ffc107','#fd7e14','#dc3545']
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { 
+          ticks: { 
+            color: '#ffffff',
+            font: { weight: 'bold' }
+          } 
+        },
+        y: { 
+          min: 0, 
+          max: 100,
+          ticks: {
+            color: '#ffffff',
+            font: { weight: 'bold' },
+            callback: function(value) {
+              if ([0,20,40,60,80,100].includes(value)) {
+                return value + '%';
+              }
+              return '';
+            }
+          },
+          title: {
+            display: true,
+            text: '% of feedbacks',
+            color: '#ffffff',
+            font: { weight: 'bold' }
+          }
+        }
+      },
+      plugins: {
+        legend: { 
+          labels: { 
+            color: '#ffffff',
+            font: { weight: 'bold' }
+          } 
+        },
+        tooltip: {
+          titleColor: '#ffffff',
+          bodyColor: '#ffffff',
+          titleFont: { weight: 'bold' },
+          bodyFont: { weight: 'bold' },
+          callbacks: {
+            label: function(context) {
+              return context.raw + '%';
+            }
+          }
+        },
+        title: {
+          display: true,
+          text: 'Total Feedbacks: ' + total,
+          color: '#ffffff',
+          font: { size: 14, weight: 'bold' },
+          padding: { top: 10, bottom: 20 }
+        }
+      }
+    }
+  });
+</script>
+
+
 <table class="table table-hover">
   <thead>
     <tr> <th>Pref</th> <th>Date & Time</th> <th>Name</th> <th>Rating</th> <th>Comments</th> <th>Photos</th> <th>Actions</th>
@@ -77,6 +166,14 @@
           <button class="btn btn-sm btn-danger">Delete</button>
         </form>
         <a href="{{ url_for('feedback_edit', fb_id=f._id) }}" class="btn btn-sm btn-primary">Edit</a>
+        <div class="form-check form-switch"> 
+          <input class="form-check-input toggle-featured"
+                type="checkbox"
+                data-id="{{ f._id }}"
+                {% if f.featured %}checked{% endif %}> 
+          <label class="form-check-label">Featured</label>
+        </div>
+
       </td>
     </tr>
     {% endfor %}
@@ -97,6 +194,24 @@ document.addEventListener('DOMContentLoaded', function () {
         bsCarousel.to(index);
       }, { once: true });
     });
+  });
+});
+
+document.querySelectorAll('.toggle-featured').forEach(el => {
+  el.addEventListener('change', async function() {
+    const id = this.dataset.id;
+    const featured = this.checked; // true if checked, false if unchecked
+
+    const res = await fetch(`/feedbacks/${id}/toggle`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ featured })
+    });
+
+    if (!res.ok) {
+      alert("Failed to update featured status");
+      this.checked = !featured; // revert if error
+    }
   });
 });
 </script>

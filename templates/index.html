@@ -200,7 +200,10 @@
               {% for fb in feedbacks %}
                 <div class="carousel-item {% if loop.first %}active{% endif %}">
                   <div class="d-flex flex-column align-items-center text-center p-4">
-                    <h5>{{ fb.name }} {{ fb.rating }}/10</h5>
+                    <h5>{{ fb.name }}</h5>
+<h5 style="color: darkgreen; font-weight: bold; margin: 5px 0;">
+  {{ fb.rating }}/10
+</h5>
                     <p class="lead card-text">{{ fb.comments }}</p>
                     <button class="btn btn-outline-primary mt-3"
                             data-bs-toggle="modal" data-bs-target="#feedbackModal{{ loop.index }}">

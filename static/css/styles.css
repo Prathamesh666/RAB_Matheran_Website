@@ -323,6 +323,49 @@ section h2 {
 .cta-buttons { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; text-align: center; justify-content: center; }
 
 /* Feedback Modal Styling */
+/* 1. Subtle zoom-in animation when modal opens */
+.modal.fade .modal-dialog {
+  transform: translateY(-10%) scale(0.92);
+  transition: transform 260ms cubic-bezier(.2,.8,.2,1);
+}
+
+/* When Bootstrap adds .show, scale to full size */
+.modal.show .modal-dialog {
+  transform: translateY(0) scale(1);
+}
+
+/* 2. Slightly larger default modal width for desktop */
+.modal-dialog.modal-lg {
+  max-width: 900px; /* adjust as needed */
+}
+
+/* Optional extra-large variant */
+.modal-dialog.modal-xl {
+  max-width: 1100px;
+}
+
+/* 3. Make modal content easier to read */
+.modal-body {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: #222;
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 4. Ensure small screens remain usable */
+@media (max-width: 576px) {
+  .modal-dialog.modal-lg,
+  .modal-dialog.modal-xl {
+    max-width: 95%;
+    margin: 1.5rem;
+  }
+  .modal.fade .modal-dialog {
+    transform: translateY(0) scale(1); /* disable zoom on tiny screens if preferred */
+  }
+}
+
 .modal-content {
   background: #fdfdfd; /* soft white for readability */
   border-radius: 12px;
@@ -343,13 +386,6 @@ section h2 {
   letter-spacing: 0.5px;
 }
 
-.modal-body {
-  font-size: 1rem;
-  line-height: 1.6;
-  color: #333; /* dark text for contrast */
-  padding: 1.5rem;
-}
-
 .modal-body p {
   margin-bottom: 1rem;
 }
@@ -359,11 +395,6 @@ section h2 {
   border-radius: 8px;
   margin-top: 1rem;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.modal-footer {
-  border-top: none;
-  padding: 1rem;
 }
 
 .btn-close {

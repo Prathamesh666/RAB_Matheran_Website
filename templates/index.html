@@ -191,34 +191,48 @@
             data-full="{{ url_for('static', filename='images/icons/pointimages.png') }}">
         <br><br>
         <!-- Testimonals -->
-        {% if feedbacks|length > 2 %}
-        <section id="visitor-feedbacks" class="container my-5" data-aos="zoom-in">
-          <h2 class="text-center"  data-aos-delay="200"  data-aos-anchor-placement="top-bottom">
-            💬 What Our Visitors Say</h2>
-          <div id="feedbackCarousel" class="carousel slide" data-bs-ride="carousel">
-            <div class="carousel-inner">
-              {% for fb in feedbacks %}
-                <div class="carousel-item {% if loop.first %}active{% endif %}">
-                  <div class="d-flex flex-column align-items-center text-center p-4">
-                    <h5>{{ fb.name }}</h5>
-<h5 style="color: darkgreen; font-weight: bold; margin: 5px 0;">
-  {{ fb.rating }}/10
-</h5>
-                    <p class="lead card-text">{{ fb.comments }}</p>
-                    <button class="btn btn-outline-primary mt-3"
-                            data-bs-toggle="modal" data-bs-target="#feedbackModal{{ loop.index }}">
-                      View Details
-                    </button>
-                  </div>
-                </div>
+{% if feedbacks|length > 2 %}
+<section id="visitor-feedbacks" class="container my-5" data-aos="zoom-in">
+  <h2 class="text-center" data-aos-delay="200" data-aos-anchor-placement="top-bottom">
+    💬 What Our Visitors Say
+  </h2>
 
-                <div class="modal fade" id="feedbackModal{{ loop.index }}" tabindex="-1" aria-hidden="true" 
+  <div id="feedbackCarousel" class="carousel slide" data-bs-ride="carousel">
+    <div class="carousel-inner">
+      {% for fb in feedbacks %}
+      <div class="carousel-item {% if loop.first %}active{% endif %}">
+        <div class="d-flex flex-column align-items-center text-center p-4">
+          <h5>{{ fb.name }}</h5>
+          <h5 style="color: darkgreen; font-weight: bold; margin: 5px 0;">
+            {{ fb.rating }}/10
+          </h5>
+          <p class="lead card-text">{{ fb.comments }}</p>
+          <button class="btn btn-outline-primary mt-3"
+                  data-bs-toggle="modal" data-bs-target="#feedbackModal{{ fb.id if fb.id is defined else loop.index }}">
+            View Details
+          </button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#feedbackCarousel" data-bs-slide="prev" aria-label="Previous">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#feedbackCarousel" data-bs-slide="next" aria-label="Next">
+      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+    </button>
+  </div>
+</section>
+
+{# Place modals outside the carousel to avoid nested interactive elements #}
+{% for fb in feedbacks %}
+<div class="modal fade" id="feedbackModal{{ fb.id if fb.id is defined else loop.index }}" tabindex="-1" aria-hidden="true"
      data-bs-backdrop="true" data-bs-keyboard="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title">{{ fb.name }}’s Feedback</h5>
-        <!-- Removed the close button -->
+        <h5 class="modal-title">{{ fb.name }}'s Feedback</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <p class="fs-5">{{ fb.comments }}</p>
@@ -226,11 +240,10 @@
     </div>
   </div>
 </div>
-              {% endfor %}
-            </div>
-          </div>
-        </section>
-        {% endif %}
+{% endfor %}
+
+{% endif %}
+
         <img src="{{ url_for('static', filename='images/icons/Atithidevo_Bhava.png') }}"
             alt="Atithidevo Bhava" class="img-fluid rounded Map hover-shadow  mb-4"
             data-bs-toggle="modal" data-bs-target="#imageModal" data-aos="fade-zoom-in"

@@ -99,11 +99,6 @@ body {
       border: 0; border-radius: 12px; /* matches container rounding */ 
     }
 
-    body.modal-open {
-      overflow: hidden;   /* Prevent background scroll */
-      padding-right: 0 !important; /* Avoid scrollbar jump */
-    }
-
     .leaf {
       position: absolute;
       width: 20px;

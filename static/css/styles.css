@@ -99,6 +99,10 @@ body {
       border: 0; border-radius: 12px; /* matches container rounding */ 
     }
 
+    body.modal-open {
+        overflow-y: hidden; /*Prevents Background scroll*/
+    }
+
     .leaf {
       position: absolute;
       width: 20px;

@@ -1180,7 +1180,7 @@ from flask import send_from_directory
 def sitemap():
     return send_from_directory('.', 'sitemap.xml')
 
-from flask import Flask, Response, url_for
+from flask import Flask, Response
 import datetime
 import logging
 
@@ -1188,8 +1188,9 @@ import logging
 def sitemapped():
     try:
         today = datetime.date.today().isoformat()
+        base_url = "https://ranchoddasarogyabhavanmatheran.onrender.com"
 
-        # Define only the public pages you want in sitemap
+        # Define only the public pages you want
         pages = [
             ('/', 1.0),
             ('/about', 0.8),
@@ -1199,19 +1200,17 @@ def sitemapped():
             ('/booking', 0.9),
         ]
 
-        # Build XML string
         sitemap_xml = ['<?xml version="1.0" encoding="UTF-8"?>']
         sitemap_xml.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
 
         for path, priority in pages:
-            url = url_for('static', filename='', _external=True).rstrip('/') + path
+            url = base_url + path
             sitemap_xml.append(
                 f"<url><loc>{url}</loc><lastmod>{today}</lastmod>"
                 f"<changefreq>weekly</changefreq><priority>{priority}</priority></url>"
             )
 
         sitemap_xml.append('</urlset>')
-
         return Response("\n".join(sitemap_xml), mimetype='application/xml')
 
     except Exception as e:

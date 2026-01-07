@@ -1175,44 +1175,45 @@ def logout():
 
 @app.route('/sitemap.xml', methods=['GET'])
 def sitemap():
-    today = datetime.date.today().isoformat()
+    try:
+        today = datetime.date.today().isoformat()
 
-    # Define custom priorities for key pages
-    priority_map = {
-        '/': 1.0,                # Home
-        '/about': 0.8,           # About
-        '/gallery': 0.7,         # Gallery
-        '/feedback': 0.9,        # Feedback
-        '/contact': 0.8,         # Contact
-        '/booking': 0.9          # Booking
-    }
+        # Define custom priorities
+        priority_map = {
+            '/': 1.0,
+            '/about': 0.8,
+            '/gallery': 0.7,
+            '/feedback': 0.9,
+            '/contact': 0.8,
+            '/booking': 0.9
+        }
 
-    sitemap_xml = '<?xml version="1.0" encoding="UTF-8"?>'
-    sitemap_xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        urls = []
+        for rule in app.url_map.iter_rules():
+            if "GET" in rule.methods and len(rule.arguments) == 0:
+                path = rule.rule
+                # Exclude admin/login routes
+                if any(excluded in path for excluded in ["/admin", "/login"]):
+                    continue
+                url = url_for(rule.endpoint, _external=True)
+                priority = priority_map.get(path, 0.5)
+                urls.append((url, today, priority))
 
-    for rule in app.url_map.iter_rules():
-        if "GET" in rule.methods and len(rule.arguments) == 0:
-            url = url_for(rule.endpoint, _external=True)
+        # Build XML safely
+        sitemap_xml = ['<?xml version="1.0" encoding="UTF-8"?>']
+        sitemap_xml.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+        for u in urls:
+            sitemap_xml.append(
+                f"<url><loc>{u[0]}</loc><lastmod>{u[1]}</lastmod>"
+                f"<changefreq>weekly</changefreq><priority>{u[2]}</priority></url>"
+            )
+        sitemap_xml.append('</urlset>')
 
-            # Exclude admin/login routes
-            if any(excluded in url for excluded in ["/admin", "/login"]):
-                continue
+        return Response("\n".join(sitemap_xml), mimetype='application/xml')
 
-            # Assign priority based on map, default to 0.5
-            path = rule.rule
-            priority = priority_map.get(path, 0.5)
-
-            sitemap_xml += f"""
-            <url>
-                <loc>{url}</loc>
-                <lastmod>{today}</lastmod>
-                <changefreq>weekly</changefreq>
-                <priority>{priority}</priority>
-            </url>
-            """
-
-    sitemap_xml += '</urlset>'
-    return Response(sitemap_xml, mimetype='application/xml')
+    except Exception as e:
+        logging.exception("Error generating sitemap")
+        return Response(f"Internal Server Error: {str(e)}", status=500, mimetype='text/plain')
 
 @app.errorhandler(404)
 def page_not_found(e):

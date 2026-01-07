@@ -1173,47 +1173,12 @@ def logout():
     flash("Logged out.", "info")
     return redirect(url_for("index"))
 
-@app.route('/sitemap.xml', methods=['GET'])
+
+from flask import send_from_directory
+
+@app.route('/sitemap.xml')
 def sitemap():
-    try:
-        today = datetime.date.today().isoformat()
-
-        # Define custom priorities
-        priority_map = {
-            '/': 1.0,
-            '/about': 0.8,
-            '/gallery': 0.7,
-            '/feedback': 0.9,
-            '/contact': 0.8,
-            '/booking': 0.9
-        }
-
-        urls = []
-        for rule in app.url_map.iter_rules():
-            if "GET" in rule.methods and len(rule.arguments) == 0:
-                path = rule.rule
-                # Exclude admin/login routes
-                if any(excluded in path for excluded in ["/admin", "/login"]):
-                    continue
-                url = url_for(rule.endpoint, _external=True)
-                priority = priority_map.get(path, 0.5)
-                urls.append((url, today, priority))
-
-        # Build XML safely
-        sitemap_xml = ['<?xml version="1.0" encoding="UTF-8"?>']
-        sitemap_xml.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
-        for u in urls:
-            sitemap_xml.append(
-                f"<url><loc>{u[0]}</loc><lastmod>{u[1]}</lastmod>"
-                f"<changefreq>weekly</changefreq><priority>{u[2]}</priority></url>"
-            )
-        sitemap_xml.append('</urlset>')
-
-        return Response("\n".join(sitemap_xml), mimetype='application/xml')
-
-    except Exception as e:
-        logging.exception("Error generating sitemap")
-        return Response(f"Internal Server Error: {str(e)}", status=500, mimetype='text/plain')
+    return send_from_directory('.', 'sitemap.xml')
 
 @app.errorhandler(404)
 def page_not_found(e):

@@ -1180,6 +1180,44 @@ from flask import send_from_directory
 def sitemap():
     return send_from_directory('.', 'sitemap.xml')
 
+from flask import Flask, Response, url_for
+import datetime
+import logging
+
+@app.route('/sitemapped', methods=['GET'])
+def sitemapped():
+    try:
+        today = datetime.date.today().isoformat()
+
+        # Define only the public pages you want in sitemap
+        pages = [
+            ('/', 1.0),
+            ('/about', 0.8),
+            ('/gallery', 0.7),
+            ('/feedback', 0.9),
+            ('/contact', 0.8),
+            ('/booking', 0.9),
+        ]
+
+        # Build XML string
+        sitemap_xml = ['<?xml version="1.0" encoding="UTF-8"?>']
+        sitemap_xml.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+
+        for path, priority in pages:
+            url = url_for('static', filename='', _external=True).rstrip('/') + path
+            sitemap_xml.append(
+                f"<url><loc>{url}</loc><lastmod>{today}</lastmod>"
+                f"<changefreq>weekly</changefreq><priority>{priority}</priority></url>"
+            )
+
+        sitemap_xml.append('</urlset>')
+
+        return Response("\n".join(sitemap_xml), mimetype='application/xml')
+
+    except Exception as e:
+        logging.exception("Error generating sitemap")
+        return Response(f"Internal Server Error: {str(e)}", status=500, mimetype='text/plain')
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404

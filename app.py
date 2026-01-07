@@ -1173,6 +1173,47 @@ def logout():
     flash("Logged out.", "info")
     return redirect(url_for("index"))
 
+@app.route('/sitemap.xml', methods=['GET'])
+def sitemap():
+    today = datetime.date.today().isoformat()
+
+    # Define custom priorities for key pages
+    priority_map = {
+        '/': 1.0,                # Home
+        '/about': 0.8,           # About
+        '/gallery': 0.7,         # Gallery
+        '/feedback': 0.9,        # Feedback
+        '/contact': 0.8,         # Contact
+        '/booking': 0.9          # Booking
+    }
+
+    sitemap_xml = '<?xml version="1.0" encoding="UTF-8"?>'
+    sitemap_xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+
+    for rule in app.url_map.iter_rules():
+        if "GET" in rule.methods and len(rule.arguments) == 0:
+            url = url_for(rule.endpoint, _external=True)
+
+            # Exclude admin/login routes
+            if any(excluded in url for excluded in ["/admin", "/login"]):
+                continue
+
+            # Assign priority based on map, default to 0.5
+            path = rule.rule
+            priority = priority_map.get(path, 0.5)
+
+            sitemap_xml += f"""
+            <url>
+                <loc>{url}</loc>
+                <lastmod>{today}</lastmod>
+                <changefreq>weekly</changefreq>
+                <priority>{priority}</priority>
+            </url>
+            """
+
+    sitemap_xml += '</urlset>'
+    return Response(sitemap_xml, mimetype='application/xml')
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404

@@ -1217,6 +1217,34 @@ def sitemapped():
         logging.exception("Error generating sitemap")
         return Response(f"Internal Server Error: {str(e)}", status=500, mimetype='text/plain')
 
+@app.route('/sitemap_index.xml')
+def sitemap_index():
+    # Paths to your sitemap files
+    sitemap_files = [
+        ('/sitemap.xml', 'sitemap.xml'),
+        ('/sitemapped', None)  # dynamic, so we’ll use today’s date
+    ]
+
+    sitemap_index_xml = ['<?xml version="1.0" encoding="UTF-8"?>']
+    sitemap_index_xml.append('<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+
+    for route, filename in sitemap_files:
+        url = f"https://ranchoddasarogyabhavanmatheran.onrender.com{route}"
+
+        if filename and os.path.exists(filename):
+            # Use file modification time for <lastmod>
+            lastmod = datetime.date.fromtimestamp(os.path.getmtime(filename)).isoformat()
+        else:
+            # For dynamic sitemap, just use today’s date
+            lastmod = datetime.date.today().isoformat()
+
+        sitemap_index_xml.append(
+            f"<sitemap><loc>{url}</loc><lastmod>{lastmod}</lastmod></sitemap>"
+        )
+
+    sitemap_index_xml.append('</sitemapindex>')
+    return Response("\n".join(sitemap_index_xml), mimetype='application/xml')
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404

@@ -1245,6 +1245,19 @@ def sitemap_index():
     sitemap_index_xml.append('</sitemapindex>')
     return Response("\n".join(sitemap_index_xml), mimetype='application/xml')
 
+@app.route('/robots.txt')
+def robots():
+    robots_text = """User-agent: *
+Disallow:
+
+Sitemap: https://ranchoddasarogyabhavanmatheran.onrender.com/sitemapped.xml
+Sitemap:
+https://ranchoddasarogyabhavanmatheran.onrender.com/sitemap.xml
+Sitemap:
+https://ranchoddasarogyabhavanmatheran.onrender.com/sitemap_index.xml
+"""
+    return Response(robots_text, mimetype='text/plain')
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404

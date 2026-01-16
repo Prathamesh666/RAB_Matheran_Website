@@ -1251,10 +1251,8 @@ def robots():
 Disallow:
 
 Sitemap: https://ranchoddasarogyabhavanmatheran.onrender.com/sitemapped.xml
-Sitemap:
-https://ranchoddasarogyabhavanmatheran.onrender.com/sitemap.xml
-Sitemap:
-https://ranchoddasarogyabhavanmatheran.onrender.com/sitemap_index.xml
+Sitemap: https://ranchoddasarogyabhavanmatheran.onrender.com/sitemap.xml
+Sitemap: https://ranchoddasarogyabhavanmatheran.onrender.com/sitemap_index.xml
 """
     return Response(robots_text, mimetype='text/plain')
 

@@ -233,16 +233,25 @@ nav a:hover {
   vertical-align: middle;
 }
 
-/* Navbar styling */
+/* Navbar Styling */
 .navbar-brick {
-  position: fixed;   /* keep navbar pinned at top */
+  position: fixed;   /* pinned at top */
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1000;     /* ensure it stays above content */
+  width: 100%;       /* full width across viewport */
+  max-width: 100vw;  /* prevent overflow on mobile */
+  z-index: 1000;
   background: url('/static/images/icons/Header.png') center/cover no-repeat;
-  background-attachment: fixed;
-  transition: top 0.3s ease-in-out, opacity 0.3s ease-in-out; /* smooth slide + fade */
+  background-attachment: fixed; /* works fine on desktop */
+  transition: top 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+/* Mobile-specific fix */
+@media (max-width: 768px) {
+  .navbar-brick {
+    background-attachment: scroll; /* avoid mobile overflow issues */
+  }
 }
 
 /* Optional overlay for readability */

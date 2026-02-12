@@ -1249,8 +1249,9 @@ def sitemap_index():
 def robots():
     robots_text = """User-agent: *
 Disallow:
+Allow: /
 
-Sitemap: https://ranchoddasarogyabhavanmatheran.onrender.com/sitemapped.xml
+Sitemap: https://ranchoddasarogyabhavanmatheran.onrender.com/sitemapped
 Sitemap: https://ranchoddasarogyabhavanmatheran.onrender.com/sitemap.xml
 Sitemap: https://ranchoddasarogyabhavanmatheran.onrender.com/sitemap_index.xml
 """

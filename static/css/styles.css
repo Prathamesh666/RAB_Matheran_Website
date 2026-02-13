@@ -5,6 +5,7 @@ html {
 body {
       margin: 0;
       height: 100vh;
+      padding-top: 80px; /* match navbar height */
     }
 
     body.home-page {
@@ -207,7 +208,7 @@ td:hover {
 
 /* Navigation */
 nav {
-  background: url('static\images\icons\Header.png');
+  background: url('static/images/icons/Header.png');
   min-height: auto;
   background-color: #D2691E; /* Terracotta */
   padding: 10px;
@@ -232,10 +233,25 @@ nav a:hover {
   vertical-align: middle;
 }
 
+/* Navbar Styling */
 .navbar-brick {
-  position: relative;
+  position: fixed;   /* pinned at top */
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;       /* full width across viewport */
+  max-width: 100vw;  /* prevent overflow on mobile */
+  z-index: 1000;
   background: url('/static/images/icons/Header.png') center/cover no-repeat;
-  background-attachment: fixed;
+  background-attachment: fixed; /* works fine on desktop */
+  transition: top 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+/* Mobile-specific fix */
+@media (max-width: 768px) {
+  .navbar-brick {
+    background-attachment: scroll; /* avoid mobile overflow issues */
+  }
 }
 
 /* Optional overlay for readability */
@@ -243,13 +259,19 @@ nav a:hover {
   content: "";
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.0.4); /* dark overlay */
+  background: rgba(0,0,0,0.4); /* dark overlay */
   z-index: -1;
 }
 
 .navbar-brick .nav-link,
 .navbar-brick .navbar-brand {
   color: #fff; /* ensure text is readable */
+}
+
+/* Hidden state when scrolling down */
+.navbar-hidden {
+  top: -80px;   /* slide out of view */
+  opacity: 0;   /* fade out */
 }
 
 /* Section Styling */

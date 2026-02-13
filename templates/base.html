@@ -85,21 +85,7 @@
           <img src="{{ url_for('static', filename='images/icons/RAG_Logo.png') }}" alt="Ranchoddas Logo" class="nav-icon" />
           Home
         </a>
-        <!-- Modal -->
-        <div class="modal fade" id="homeModal" tabindex="-1" aria-labelledby="homeModalLabel" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="homeModalLabel">Go to Home?</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-              </div>
-              <div class="modal-footer">
-                <a href="{{ url_for('index') }}" class="btn btn-primary">Yes, take me Home</a>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              </div>
-            </div>
-          </div>
-        </div>
+        
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navmenu">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -137,6 +123,22 @@
       {% endwith %}
       {% block content %}{% endblock %}
     </main>
+
+    <!-- Modal -->
+    <div class="modal fade" id="homeModal" tabindex="-1" aria-labelledby="homeModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="homeModalLabel">Go to Home?</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-footer">
+            <a href="{{ url_for('index') }}" class="btn btn-primary">Yes, take me Home</a>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <footer class="gallery-page py-4 mt-5">
       <div class="container text-center">

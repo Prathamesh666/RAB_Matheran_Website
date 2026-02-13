@@ -270,7 +270,7 @@ nav a:hover {
 
 /* Hidden state when scrolling down */
 .navbar-hidden {
-  top: -80px;   /* slide out of view */
+  top: -100px;   /* slide out of view */
   opacity: 0;   /* fade out */
 }
 

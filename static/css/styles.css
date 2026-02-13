@@ -5,7 +5,8 @@ html {
 body {
       margin: 0;
       height: 100vh;
-      padding-top: 80px; /* match navbar height */
+      min-width: 320px;
+      padding-top: 100px; /* match navbar height */
     }
 
     body.home-page {
@@ -245,13 +246,6 @@ nav a:hover {
   background: url('/static/images/icons/Header.png') center/cover no-repeat;
   background-attachment: fixed; /* works fine on desktop */
   transition: top 0.3s ease-in-out, opacity 0.3s ease-in-out;
-}
-
-/* Mobile-specific fix */
-@media (max-width: 768px) {
-  .navbar-brick {
-    background-attachment: scroll; /* avoid mobile overflow issues */
-  }
 }
 
 /* Optional overlay for readability */

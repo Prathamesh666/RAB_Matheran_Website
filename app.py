@@ -319,6 +319,30 @@ def booking():  # sourcery skip: last-if-guard
     guests = int(request.form.get("guests", 1))
     note = request.form.get("note", "")
 
+    # ✅ Enforce 1-day interval rule (any one of phone/email/name)
+    cutoff_time = datetime.now(ZoneInfo("Asia/Kolkata")) - timedelta(days=1)
+    existing = db.bookings.find_one({
+        "$or": [
+            {"phone": phone},
+            {"email": email},
+            {"name": name}
+        ],
+        "createdat": {"$gte": cutofftime}
+    })
+
+    if existing:
+        bookingid = str(existing["id"])
+        status = existing.get("status", "Pending")
+
+        if status == "Pending":
+            flash(f"Booking already submitted (ID: {booking_id}). Please wait for further confirmation email.", "warning")
+        elif status == "Rejected":
+            flash(f"Booking rejected (ID: {booking_id}) due to some reasons. Please contact us for further availability or you can try again after 24 hours.", "danger")
+        else:
+            flash(f"You already have a booking (ID: {booking_id}) with status: {status}. For changes in the booking details contact us through our website", "info")
+
+        return redirect(url_for("booking"))
+
     # Server-side validation
     if not check_in or not check_out:
         flash("Check-in and check-out dates are required.", "danger")

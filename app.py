@@ -522,7 +522,7 @@ def booking():  # sourcery skip: last-if-guard
             except Exception:
                 app.logger.exception("Failed to send SMS notification")
 
-    return redirect(url_for("bookings_list"))
+    return redirect(url_for("booking"))
 
 # Bookings list protected for admin
 @app.route("/bookings")
@@ -842,7 +842,7 @@ def feedback(): # sourcery skip: last-if-guard
                 app.logger.exception("Failed to send return feedback email")
 
         flash("Thank you for your feedback.", "success")
-        return redirect(url_for("feedbacks_list"))
+        return redirect(url_for("feedback"))
 
     return render_template("feedback.html")
 
@@ -1272,7 +1272,11 @@ def sitemap_index():
 @app.route('/robots.txt')
 def robots():
     robots_text = """User-agent: *
-Disallow:
+Disallow: /login
+Disallow: /gallery_edit
+Disallow: /bookings
+Disallow: /contacts
+Disallow: /feedbacks
 Allow: /
 
 Sitemap: https://ranchoddasarogyabhavanmatheran.onrender.com/sitemapped

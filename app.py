@@ -331,15 +331,15 @@ def booking():  # sourcery skip: last-if-guard
 })
 
     if existing:
-    booking_id = str(existing["_id"])  # use MongoDB’s _id field
-    status = existing.get("status", "Pending")
+        booking_id = str(existing["_id"])  # use MongoDB’s _id field
+        status = existing.get("status", "Pending")
 
         if status == "Pending":
-        flash(f"Booking already submitted (ID: {booking_id}). Please wait for further confirmation email.", "warning")
-    elif status == "Rejected":
-        flash(f"Booking rejected (ID: {booking_id}) due to some reasons. Please contact us for further availability or you can try again after 24 hours.", "danger")
-    else:
-        flash(f"You already have a booking (ID: {booking_id}) with status: {status}. For changes in the booking details contact us through our website", "info")
+            flash(f"Booking already submitted (ID: {booking_id}). Please wait for further confirmation email.", "warning")
+        elif status == "Rejected":
+            flash(f"Booking rejected (ID: {booking_id}) due to some reasons. Please contact us for further availability or you can try again after 24 hours.", "danger")
+        else:
+            flash(f"You already have a booking (ID: {booking_id}) with status: {status}. For changes in the booking details contact us through our website", "info")
 
     return redirect(url_for("booking"))
 
@@ -1056,7 +1056,7 @@ def contact_edit(contact_id):
                 "name": request.form["name"],
                 "phone": request.form["phone"],
                 "email": request.form["email"],
-                "note": request.form["note"]
+                "message": request.form["message"]
             }}
         )
         flash("Contact updated successfully!", "success")

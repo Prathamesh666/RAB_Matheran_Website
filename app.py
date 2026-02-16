@@ -321,7 +321,7 @@ def booking():  # sourcery skip: last-if-guard
 
     # ✅ Enforce 1-day interval rule (any one of phone/email/name)
     cutoff_time = datetime.now(ZoneInfo("Asia/Kolkata")) - timedelta(days=1)
-existing = db.bookings.find_one({
+    existing = db.bookings.find_one({
     "$or": [
         {"phone": phone},
         {"email": email},

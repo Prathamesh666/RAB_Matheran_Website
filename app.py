@@ -321,38 +321,27 @@ def booking():  # sourcery skip: last-if-guard
 
     # ✅ Enforce 1-day interval rule (any one of phone/email/name)
     cutoff_time = datetime.now(ZoneInfo("Asia/Kolkata")) - timedelta(days=1)
-    existing = db.bookings.find_one({
-        "$or": [
-            {"phone": phone},
-            {"email": email},
-            {"name": name}
-        ],
-        "createdat": {"$gte": cutofftime}
-    })
+existing = db.bookings.find_one({
+    "$or": [
+        {"phone": phone},
+        {"email": email},
+        {"name": name}
+    ],
+    "created_at": {"$gte": cutoff_time}   # fixed variable + field name
+})
 
-    if existing:
-        bookingid = str(existing["id"])
-        status = existing.get("status", "Pending")
+if existing:
+    booking_id = str(existing["_id"])  # use MongoDB’s _id field
+    status = existing.get("status", "Pending")
 
-        if status == "Pending":
-            flash(f"Booking already submitted (ID: {booking_id}). Please wait for further confirmation email.", "warning")
-        elif status == "Rejected":
-            flash(f"Booking rejected (ID: {booking_id}) due to some reasons. Please contact us for further availability or you can try again after 24 hours.", "danger")
-        else:
-            flash(f"You already have a booking (ID: {booking_id}) with status: {status}. For changes in the booking details contact us through our website", "info")
+    if status == "Pending":
+        flash(f"Booking already submitted (ID: {booking_id}). Please wait for further confirmation email.", "warning")
+    elif status == "Rejected":
+        flash(f"Booking rejected (ID: {booking_id}) due to some reasons. Please contact us for further availability or you can try again after 24 hours.", "danger")
+    else:
+        flash(f"You already have a booking (ID: {booking_id}) with status: {status}. For changes in the booking details contact us through our website", "info")
 
-        return redirect(url_for("booking"))
-
-    # Server-side validation
-    if not check_in or not check_out:
-        flash("Check-in and check-out dates are required.", "danger")
-        return redirect(url_for("booking"))
-    try:
-        ci = datetime.strptime(check_in, "%Y-%m-%d").date()
-        co = datetime.strptime(check_out, "%Y-%m-%d").date()
-    except Exception:
-        flash("Invalid dates provided.", "danger")
-        return redirect(url_for("booking"))
+    return redirect(url_for("booking"))
 
     if ci >= co:
         flash("Check-out date must be after check-in date.", "danger")

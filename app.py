@@ -330,11 +330,11 @@ def booking():  # sourcery skip: last-if-guard
     "created_at": {"$gte": cutoff_time}   # fixed variable + field name
 })
 
-if existing:
+    if existing:
     booking_id = str(existing["_id"])  # use MongoDB’s _id field
     status = existing.get("status", "Pending")
 
-    if status == "Pending":
+        if status == "Pending":
         flash(f"Booking already submitted (ID: {booking_id}). Please wait for further confirmation email.", "warning")
     elif status == "Rejected":
         flash(f"Booking rejected (ID: {booking_id}) due to some reasons. Please contact us for further availability or you can try again after 24 hours.", "danger")

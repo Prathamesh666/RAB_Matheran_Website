@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, abort, Response
 from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
-from datetime import datetime, timezone
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from werkzeug.security import check_password_hash
 from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin
@@ -212,7 +212,7 @@ def gallery_edit():
                 "title": title,
                 "key": key,
                 "images": [],
-                "created_at": datetime.now(timezone.utc)
+                "created_at": datetime.now(ZoneInfo("Asia/Kolkata"))
             })
             flash("Category added.", "success")
 
@@ -318,6 +318,31 @@ def booking():  # sourcery skip: last-if-guard
     check_out = request.form.get("check_out")
     guests = int(request.form.get("guests", 1))
     note = request.form.get("note", "")
+    
+    # ✅ Enforce 1-day interval rule (any one of phone/email/name)
+    from datetime import datetime, timedelta
+    cutoff_time = datetime.now(ZoneInfo("Asia/Kolkata")) - timedelta(days=1)
+    existing = db.bookings.find_one({
+        "$or": [
+            {"phone": phone},
+            {"email": email},
+            {"name": name}
+        ],
+        "created_at": {"$gte": cutoff_time}   # fixed variable + field name
+    })
+
+    if existing:
+        booking_id = str(existing["_id"])  # use MongoDB’s _id field
+        status = existing.get("status", "Pending")
+
+        if status == "Pending":
+            flash(f"Booking already submitted (ID: {booking_id}). Please wait for further confirmation email.", "warning")
+        elif status == "Rejected":
+            flash(f"Booking rejected (ID: {booking_id}) due to some reasons. Please contact us for further availability or you can try again after 24 hours of previous booking genration.", "danger")
+        else:
+            flash(f"You already have a booking (ID: {booking_id}) with status: {status}. For changes in the booking details contact us through our website", "info")
+
+        return redirect(url_for("booking"))
 
     # Server-side validation
     if not check_in or not check_out:
@@ -498,7 +523,7 @@ def booking():  # sourcery skip: last-if-guard
             except Exception:
                 app.logger.exception("Failed to send SMS notification")
 
-    return redirect(url_for("bookings_list"))
+    return redirect(url_for("booking"))
 
 # Bookings list protected for admin
 @app.route("/bookings")
@@ -818,7 +843,7 @@ def feedback(): # sourcery skip: last-if-guard
                 app.logger.exception("Failed to send return feedback email")
 
         flash("Thank you for your feedback.", "success")
-        return redirect(url_for("feedbacks_list"))
+        return redirect(url_for("feedback"))
 
     return render_template("feedback.html")
 
@@ -1043,7 +1068,7 @@ def contact_edit(contact_id):
                 "name": request.form["name"],
                 "phone": request.form["phone"],
                 "email": request.form["email"],
-                "note": request.form["note"]
+                "message": request.form["message"]
             }}
         )
         flash("Contact updated successfully!", "success")

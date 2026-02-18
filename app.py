@@ -1261,11 +1261,6 @@ def sitemap_index():
 @app.route('/robots.txt')
 def robots():
     robots_text = """User-agent: *
-Disallow: /login
-Disallow: /gallery_edit
-Disallow: /bookings
-Disallow: /contacts
-Disallow: /feedbacks
 Allow: /
 
 Sitemap: https://ranchoddasarogyabhavanmatheran.onrender.com/sitemapped

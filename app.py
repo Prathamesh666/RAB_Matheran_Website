@@ -5,7 +5,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from werkzeug.security import check_password_hash
 from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin
-import smtplib, os
+import smtplib, os, logging
 from DCIC import *
 from email.message import EmailMessage
 from werkzeug.utils import secure_filename
@@ -368,6 +368,13 @@ def booking():  # sourcery skip: last-if-guard
 
         return redirect(url_for("booking"))
 
+    try:
+        ci = datetime.strptime(check_in, "%Y-%m-%d").date()
+        co = datetime.strptime(check_out, "%Y-%m-%d").date()
+    except Exception:
+        flash("Invalid dates provided.", "danger")
+        return redirect(url_for("booking"))
+        
     if ci >= co:
         flash("Check-out date must be after check-in date.", "danger")
         return redirect(url_for("booking"))
@@ -707,6 +714,7 @@ def booking_edit(booking_id):
         if not check_in or not check_out:
             flash("Check-in and check-out dates are required.", "danger")
             return redirect(url_for("booking_edit", booking_id=booking_id))
+        from datetime import datetime
         try:
             ci = datetime.strptime(check_in, "%Y-%m-%d").date()
             co = datetime.strptime(check_out, "%Y-%m-%d").date()
@@ -1186,8 +1194,7 @@ def reply_generic(reply_type, guest_email):
         flash(f"{reply_type.capitalize()} reply sent to guest.", "success")
         return redirect(url_for("contact"))
 
-    return render_template("reply_to_contact.html", guest_email=guest_email, subject=template["subject"],
-                        body_html=template["body_html"])
+    return render_template("reply_to_contact.html", guest_email=guest_email, subject=template["subject"], body_html=template["body_html"])
 
 # Admin login/logout
 @app.route("/login", methods=["GET", "POST"])
@@ -1211,17 +1218,10 @@ def logout():
     flash("Logged out.", "info")
     return redirect(url_for("index"))
 
-@app.route('/sitemap.xml')
-def sitemap():
-    return send_from_directory('.', 'sitemap.xml')
-
-from flask import Flask, Response
-import datetime, logging
-
 @app.route('/sitemapped', methods=['GET'])
 def sitemapped():
     try:
-        today = datetime.date.today().isoformat()
+        today = datetime.today().date().isoformat()
         base_url = "https://ranchoddasarogyabhavanmatheran.onrender.com"
 
         # Define only the public pages you want
@@ -1234,8 +1234,7 @@ def sitemapped():
             ('/booking', 0.9),
         ]
 
-        sitemap_xml = ['<?xml version="1.0" encoding="UTF-8"?>']
-        sitemap_xml.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+        sitemap_xml = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
 
         for path, priority in pages:
             url = base_url + path
@@ -1250,34 +1249,6 @@ def sitemapped():
     except Exception as e:
         logging.exception("Error generating sitemap")
         return Response(f"Internal Server Error: {str(e)}", status=500, mimetype='text/plain')
-
-@app.route('/sitemap_index.xml')
-def sitemap_index():
-    # Paths to your sitemap files
-    sitemap_files = [
-        ('/sitemap.xml', 'sitemap.xml'),
-        ('/sitemapped', None)  # dynamic, so we’ll use today’s date
-    ]
-
-    sitemap_index_xml = ['<?xml version="1.0" encoding="UTF-8"?>']
-    sitemap_index_xml.append('<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
-
-    for route, filename in sitemap_files:
-        url = f"https://ranchoddasarogyabhavanmatheran.onrender.com{route}"
-
-        if filename and os.path.exists(filename):
-            # Use file modification time for <lastmod>
-            lastmod = datetime.date.fromtimestamp(os.path.getmtime(filename)).isoformat()
-        else:
-            # For dynamic sitemap, just use today’s date
-            lastmod = datetime.date.today().isoformat()
-
-        sitemap_index_xml.append(
-            f"<sitemap><loc>{url}</loc><lastmod>{lastmod}</lastmod></sitemap>"
-        )
-
-    sitemap_index_xml.append('</sitemapindex>')
-    return Response("\n".join(sitemap_index_xml), mimetype='application/xml')
 
 @app.route('/robots.txt')
 def robots():

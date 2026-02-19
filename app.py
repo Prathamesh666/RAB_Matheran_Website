@@ -366,7 +366,7 @@ def booking():  # sourcery skip: last-if-guard
         else:
             flash(f"You already have a booking (ID: {booking_id}) with status: {status}. For changes in the booking details contact us through our website", "info")
 
-    return redirect(url_for("booking"))
+        return redirect(url_for("booking"))
 
     if ci >= co:
         flash("Check-out date must be after check-in date.", "danger")
@@ -1219,8 +1219,7 @@ def sitemap():
     return send_from_directory('.', 'sitemap.xml')
 
 from flask import Flask, Response
-import datetime
-import logging
+import datetime, logging
 
 @app.route('/sitemapped', methods=['GET'])
 def sitemapped():
@@ -1286,17 +1285,17 @@ def sitemap_index():
 @app.route('/robots.txt')
 def robots():
     robots_text = """User-agent: *
-Disallow: /login
-Disallow: /gallery_edit
-Disallow: /bookings
-Disallow: /contacts
-Disallow: /feedbacks
-Allow: /
-
-Sitemap: https://ranchoddasarogyabhavanmatheran.onrender.com/sitemapped
-Sitemap: https://ranchoddasarogyabhavanmatheran.onrender.com/sitemap.xml
-Sitemap: https://ranchoddasarogyabhavanmatheran.onrender.com/sitemap_index.xml
-"""
+    Allow: /
+    Disallow: /login
+    Disallow: /gallery_edit
+    Disallow: /bookings
+    Disallow: /contacts
+    Disallow: /feedbacks
+    
+    Sitemap: https://ranchoddasarogyabhavanmatheran.onrender.com/sitemapped
+    Sitemap: https://ranchoddasarogyabhavanmatheran.onrender.com/sitemap.xml
+    Sitemap: https://ranchoddasarogyabhavanmatheran.onrender.com/sitemap_index.xml
+    """
     return Response(robots_text, mimetype='text/plain')
 
 @app.errorhandler(404)

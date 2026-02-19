@@ -1,25 +1,71 @@
-import os, config
-from flask import config, url_for
-import requests
+import os
 import base64
-import smtplib
-from email.message import EmailMessage
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.image import MIMEImage
+from flask import url_for
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+import pickle
 
+SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
+
+def get_gmail_service():
+    creds = None
+    # Token stores user access/refresh tokens
+    if os.path.exists("token.pickle"):
+        with open("token.pickle", "rb") as token:
+            creds = pickle.load(token)
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file("credentials_web.json", SCOPES)
+            creds = flow.run_local_server(port=0)
+        with open("token.pickle", "wb") as token:
+            pickle.dump(creds, token)
+    return build("gmail", "v1", credentials=creds)
+
+def send_via_gmail(notification_type, subject, plain_body, html_body, to_email):
+    service = get_gmail_service()
+
+    # Create MIME message
+    message = MIMEMultipart("related")
+    message["To"] = to_email
+    message["From"] = os.getenv("SMTP_USER")
+    message["Subject"] = subject
+
+    # Alternative plain + HTML
+    alt_part = MIMEMultipart("alternative")
+    alt_part.attach(MIMEText(plain_body, "plain"))
+    alt_part.attach(MIMEText(html_body, "html"))
+    message.attach(alt_part)
+
+    # Attach logo inline
+    logo_path = "static/images/icons/RAG_Logo.png"
+    if os.path.exists(logo_path):
+        with open(logo_path, "rb") as img:
+            logo = MIMEImage(img.read(), name="RAG_Logo.png")
+            logo.add_header("Content-ID", "<RAG_Logo>")
+            logo.add_header("Content-Disposition", "inline", filename="RAG_Logo.png")
+            message.attach(logo)
+
+    # Encode message
+    raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+
+    try:
+        sent = service.users().messages().send(
+            userId="me", body={"raw": raw_message}
+        ).execute()
+        print(f"✅ {notification_type} email sent via Gmail API, ID: {sent['id']}")
+    except Exception as e:
+        print("❌ Failed via Gmail API:", e)
+        
 def send_notification(notification_type, booking_id=None, name=None, phone=None, email=None,
-                    check_in=None, check_out=None, guests=None, note=None, message=None, to_email=None):
-    """
-    Unified notification sender using Sender API.
-    Supports:
-    - admin_alert
-    - customer_alert (booking created)
-    - guest_confirmation
-    - booking_acceptance
-    - booking_rejection
-    - booking_pending
-    - feedback_response
-    - contact_form_alert
-    """
+                      check_in=None, check_out=None, guests=None, note=None, message=None, to_email=None):
 
+    # --- Subject and Body Maps ---
     subject_map = {
         "admin_alert": f"New Booking Alert From Shri Ranchoddas Hindu Arogya Bhavan - ID {booking_id}",
         "customer_alert": "Booking Created - Shri Ranchoddas Hindu Arogya Bhavan",
@@ -33,33 +79,32 @@ def send_notification(notification_type, booking_id=None, name=None, phone=None,
 
     plain_body_map = {
         "admin_alert": (
-            f"Dear Admin, you have a new booking that has been created.\n\n"
+            f"Dear Admin, you have a new booking.\n\n"
             f"Booking ID: {booking_id}\nName: {name}\nPhone: {phone}\nEmail: {email}\n"
             f"Check-in: {check_in} → Check-out: {check_out}\nGuests: {guests}\nNote: {note}"
         ),
         "customer_alert": (
-            f"Dear {name},\n\nYour booking (ID: {booking_id}) is generated in the system and is currently pending acceptance "
-            f"for {check_in} to {check_out}.\n\nKindly wait for further confirmation mail.\n\n"
-            f"Thanks for your cooperation.\n\nRegards,\nShri Ranchoddas Hindu Arogya Bhavan\nMatheran Hill Station"
+            f"Dear {name},\n\nYour booking (ID: {booking_id}) is generated and pending acceptance "
+            f"for {check_in} to {check_out}.\n\nPlease wait for confirmation.\n\nRegards,\nShri Ranchoddas Hindu Arogya Bhavan"
         ),
         "guest_confirmation": (
             f"Dear {name},\n\nYour booking (ID: {booking_id}) has been accepted "
-            f"for Check-In: {check_in} to Check-Out: {check_out}.\n\n"
-            f"We hope you find our Guest House comfortable and pleasant.\n\n"
-            f"Regards,\nShri Ranchoddas Hindu Arogya Bhavan\nMatheran Hill Station"
+            f"for Check-In: {check_in} to Check-Out: {check_out}.\n\nWe look forward to hosting you!"
         ),
-        "booking_acceptance": f"Dear {name},\n\nYour booking (ID: {booking_id}) has been accepted for {check_in} → {check_out}.\nWe look forward to hosting you!",
-        "booking_rejection": f"Dear {name},\n\nWe regret to inform you that your booking (ID: {booking_id}) has been rejected for {check_in} → {check_out}.",
-        "booking_pending": (f"Dear {name},\n\nYour booking (ID: {booking_id}) is regenerated in the system and is currently pending acceptance "
-            f"for {check_in} to {check_out}.\n\nKindly wait for further confirmation mail.\n\n"
-            f"Thanks for your cooperation.\n\nRegards,\nShri Ranchoddas Hindu Arogya Bhavan\nMatheran Hill Station"),
-        "feedback_response": f"Dear {name},\n\nThank you for your feedback.\nYour thoughts help us improve our hospitality.\n📍 Location: Matheran Hill Station\n🌐 Website: www.ranchoddasbhavan.com",
+        "booking_acceptance": f"Dear {name},\n\nYour booking (ID: {booking_id}) has been accepted for {check_in} → {check_out}.",
+        "booking_rejection": f"Dear {name},\n\nWe regret to inform you that your booking (ID: {booking_id}) was rejected.",
+        "booking_pending": f"Dear {name},\n\nYour booking (ID: {booking_id}) is pending acceptance for {check_in} to {check_out}.",
+        "feedback_response": f"Dear {name},\n\nThank you for your feedback.\n📍 Matheran Hill Station\n🌐 www.ranchoddasbhavan.com",
         "contact_form_alert": f"New contact form submission from {name} ({email}):\n\n{message}"
     }
-    
-    booking_url = url_for('reply_generic', reply_type='booking', guest_email=email or to_email, _external=True)
-    feedback_url = url_for('reply_generic', reply_type='feedback', guest_email=email or to_email, _external=True)
-    location_url = url_for('reply_generic', reply_type='location', guest_email=email or to_email, _external=True)
+
+    #booking_url = url_for('reply_generic', reply_type='booking', guest_email=email or to_email, _external=True)
+    #feedback_url = url_for('reply_generic', reply_type='feedback', guest_email=email or to_email, _external=True)
+    #location_url = url_for('reply_generic', reply_type='location', guest_email=email or to_email, _external=True)
+    base_url = os.getenv("APP_BASE_URL", "https://ranchoddasarogyabhavanmatheran.onrender.com")
+    booking_url = f"{base_url}/reply/booking/{email or to_email}"
+    feedback_url = f"{base_url}/reply/feedback/{email or to_email}"
+    location_url = f"{base_url}/reply/location/{email or to_email}"
 
     # Simplified HTML templates (you can reuse your styled versions)
     html_body_map = {
@@ -262,71 +307,5 @@ def send_notification(notification_type, booking_id=None, name=None, phone=None,
     plain_body = plain_body_map[notification_type]
     html_body = html_body_map[notification_type]
 
-    logo_path = "static/images/icons/RAG_Logo.png"
-    logo_data = None
-    if os.path.exists(logo_path):
-        with open(logo_path, "rb") as img:
-            logo_data = base64.b64encode(img.read()).decode()
-            
-    if sender_key := os.getenv("SENDER_API_KEY"):
-        # --- Production: Sender API ---
-        payload = {
-            "from": {"email": os.getenv("ADMIN_EMAIL"), "name": "Ranchoddas Bhavan"},
-            "to": [{"email": to_email or email or os.getenv("ADMIN_EMAIL")}],
-            "subject": subject,
-            "html": html_body,
-            "text": plain_body
-        }
-        if logo_data:
-            payload["attachments"] = [{
-                "content": logo_data,
-                "type": "image/png",
-                "filename": "RAG_Logo.png",
-                "disposition": "inline",
-                "cid": "RAG_Logo"
-            }]
-        try:
-            response = requests.post(
-                "https://api.sender.net/v2/email",
-                headers={
-                    "Authorization": f"Bearer {sender_key}",
-                    "Content-Type": "application/json"
-                },
-                json=payload
-            )
-            if response.status_code in {200, 202}:
-                print(f"✅ {notification_type} email sent via Sender API")
-            else:
-                print("❌ Failed via Sender:", response.status_code, response.text)
-        except Exception as e:
-            print("❌ Exception via Sender:", e)
-
-    else:
-        # --- Local: SMTP ---
-        try:
-            msg = EmailMessage()
-            msg["Subject"] = subject
-            msg["From"] = os.getenv("SMTP_USER")
-            msg["To"] = to_email or email or os.getenv("ADMIN_EMAIL")
-            msg.set_content(plain_body)
-            msg.add_alternative(html_body, subtype="html")
-
-            if logo_data:
-                msg.get_payload()[1].add_related( # type: ignore
-                    base64.b64decode(logo_data), maintype="image", subtype="png", cid="RAG_Logo"
-                )
-
-            # Attach logo image inline
-                with open("static/images/icons/RAG_Logo.png", "rb") as img:
-                    msg.get_payload()[1].add_related(img.read(), maintype="image", subtype="png", cid="RAG_Logo") # type: ignore
-
-            # Send email    
-            with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server: # type: ignore
-                    server.starttls()
-                    if config.SMTP_USER is not None and config.SMTP_PASS is not None:  # type: ignore
-                        server.login(config.SMTP_USER, config.SMTP_PASS) # type: ignore 
-                    server.send_message(msg)
-            server.send_message(msg)
-            print(f"✅ {notification_type} email sent via SMTP")
-        except Exception as e:
-            print("❌ Failed via SMTP:", e)
+    # --- Send via Gmail API ---
+    send_via_gmail(notification_type, subject, plain_body, html_body, to_email or email or os.getenv("ADMIN_EMAIL"))

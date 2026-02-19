@@ -3,6 +3,7 @@ from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
 from datetime import datetime
 from zoneinfo import ZoneInfo
+from GmailAPI_Notification import send_notification
 from werkzeug.security import check_password_hash
 from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin
 import smtplib, os, logging
@@ -812,6 +813,13 @@ def feedback(): # sourcery skip: last-if-guard
             "created_at": datetime.now(ZoneInfo("Asia/Kolkata"))
         })
         
+        #from GmailAPI_Notification import send_notification      
+        #send_notification(
+        #    notification_type="feedback_response",
+        #    name=name,
+        #    to_email=email
+        #)
+        
         # Notify Thanks email for the feedback to guests
         if config.SMTP_HOST and email: # type: ignore
             try:
@@ -1217,6 +1225,48 @@ def logout():
     logout_user()
     flash("Logged out.", "info")
     return redirect(url_for("index"))
+
+from flask import Flask, request, redirect
+from google_auth_oauthlib.flow import InstalledAppFlow, Flow
+
+SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
+
+flow = InstalledAppFlow.from_client_secrets_file("credentials_desktop.json", SCOPES)
+creds = flow.run_local_server(port=0)  # works with random localhost port
+
+@app.route("/authorize")
+def authorize():
+    flow = Flow.from_client_secrets_file(
+        "credentials_web.json",
+        scopes=SCOPES,
+        redirect_uri="https://ranchoddasarogyabhavanmatheran.onrender.com/oauth2callback"
+    )
+    auth_url, state = flow.authorization_url(
+        access_type="offline",
+        include_granted_scopes="true"
+    )
+    return redirect(auth_url)
+
+@app.route("/oauth2callback")
+def oauth2callback():
+    flow = Flow.from_client_secrets_file(
+        "credentials_web.json",
+        scopes=SCOPES,
+        redirect_uri="https://ranchoddasarogyabhavanmatheran.onrender.com/oauth2callback"
+    )
+    flow.fetch_token(authorization_response=request.url)
+    creds = flow.credentials
+    with open("token_web.json", "w") as token_file:
+        token_file.write(creds.to_json())
+    return "✅ Authentication successful!"
+
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
+
+@app.route("/terms")
+def terms():
+    return render_template("terms.html")
 
 @app.route('/sitemapped', methods=['GET'])
 def sitemapped():

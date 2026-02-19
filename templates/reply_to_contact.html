@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>Compose Reply to {{ guest_email }}</h2>
+<center><img src="{{ url_for('static', filename='images/icons/RAG_Logo.png') }}" alt="Logo" /></center>
 <form method="post" id="replyForm">
   <div class="mb-3">
     <label class="form-label">Subject</label>

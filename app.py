@@ -1,7 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, abort, Response
+from flask import Flask, render_template, request, redirect, url_for, flash, abort, Response, send_from_directory
 from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
-from datetime import datetime, timedelta
+from datetime import datetime
 from zoneinfo import ZoneInfo
 from werkzeug.security import check_password_hash
 from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin
@@ -1211,9 +1211,6 @@ def logout():
     flash("Logged out.", "info")
     return redirect(url_for("index"))
 
-
-from flask import send_from_directory
-
 @app.route('/sitemap.xml')
 def sitemap():
     return send_from_directory('.', 'sitemap.xml')
@@ -1296,6 +1293,7 @@ def robots():
     Sitemap: https://ranchoddasarogyabhavanmatheran.onrender.com/sitemap.xml
     Sitemap: https://ranchoddasarogyabhavanmatheran.onrender.com/sitemap_index.xml
     """
+
     return Response(robots_text, mimetype='text/plain')
 
 @app.errorhandler(404)

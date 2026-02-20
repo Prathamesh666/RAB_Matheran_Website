@@ -1,11 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, abort, Response, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, flash, abort, Response
+from markupsafe import Markup
 from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from GmailAPI_Notification import send_notification
 from werkzeug.security import check_password_hash
-from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin
+from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin, current_user
 import smtplib, os, logging
 from DCIC import *
 from email.message import EmailMessage
@@ -323,40 +324,16 @@ def booking():  # sourcery skip: last-if-guard
     # ✅ Enforce 1-day interval rule (any one of phone/email/name)
     from datetime import datetime, timedelta
     cutoff_time = datetime.now(ZoneInfo("Asia/Kolkata")) - timedelta(days=1)
-    existing = db.bookings.find_one({
-        "$or": [
-            {"phone": phone},
-            {"email": email},
-            {"name": name}
-        ],
-        "created_at": {"$gte": cutoff_time}   # fixed variable + field name
-    })
 
-    if existing:
-        booking_id = str(existing["_id"])  # use MongoDB’s _id field
-        status = existing.get("status", "Pending")
-
-        if status == "Pending":
-            flash(f"Booking already submitted (ID: {booking_id}). Please wait for further confirmation email.", "warning")
-        elif status == "Rejected":
-            flash(f"Booking rejected (ID: {booking_id}) due to some reasons. Please contact us for further availability or you can try again after 24 hours of previous booking genration.", "danger")
-        else:
-            flash(f"You already have a booking (ID: {booking_id}) with status: {status}. For changes in the booking details contact us through our website", "info")
-
-        return redirect(url_for("booking"))
-
-    # ✅ Enforce 1-day interval rule (any one of phone/email/name)
-    cutoff_time = datetime.now(ZoneInfo("Asia/Kolkata")) - timedelta(days=1)
-    existing = db.bookings.find_one({
-    "$or": [
-        {"phone": phone},
-        {"email": email},
-        {"name": name}
-    ],
-    "created_at": {"$gte": cutoff_time}   # fixed variable + field name
-})
-
-    if existing:
+    if existing := db.bookings.find_one({
+    "$or": [ {"phone": phone}, {"email": email}, {"name": name} ], "created_at": {"$gte": cutoff_time}   # fixed variable + field name
+    }):
+        flash(Markup(
+                f'<div style="display:flex; justify-content:space-between; align-items:center;">'
+                f'<span>You already had a booking submitted.</span>'
+                f'<a href="{url_for("booking_edit", booking_id=str(existing["_id"]))}" class="btn btn-sm btn-success">Edit your booking</a>'
+                f'</div>'
+            ), "info")
         booking_id = str(existing["_id"])  # use MongoDB’s _id field
         status = existing.get("status", "Pending")
 
@@ -366,6 +343,12 @@ def booking():  # sourcery skip: last-if-guard
             flash(f"Booking rejected (ID: {booking_id}) due to some reasons. Please contact us for further availability or you can try again after 24 hours.", "danger")
         else:
             flash(f"You already have a booking (ID: {booking_id}) with status: {status}. For changes in the booking details contact us through our website", "info")
+            flash(Markup(
+                f'<div style="display:flex; justify-content:space-between; align-items:center;">'
+                f'<span>You already had a booking (ID: {booking_id}) which is {status}.</span>'
+                f'<a href="{url_for("booking_edit", booking_id=str(existing["_id"]))}" class="btn btn-sm btn-success">Edit your booking</a>'
+                f'</div>'
+            ), "info")
 
         return redirect(url_for("booking"))
 
@@ -727,7 +710,8 @@ def booking_edit(booking_id):
             flash("Check-out date must be after check-in date.", "danger")
             return redirect(url_for("booking_edit", booking_id=booking_id))
 
-        updated = {
+        db.booking.update_one({"_id": ObjectId(booking_id)}, 
+        {"$set": { # type: ignore
             "name": name,
             "phone": phone,
             "email": email,
@@ -735,8 +719,9 @@ def booking_edit(booking_id):
             "check_out": check_out,
             "guests": guests,
             "status": status,
-            "note": note
-        }
+            "note": note,
+            "updated_at": datetime.now(ZoneInfo("Asia/Kolkata")) }
+        })
         # Notify customer based on status
         if status.lower() == "accepted":
             booking_accept(booking_id)
@@ -745,9 +730,14 @@ def booking_edit(booking_id):
         else:
             booking_pending(email, name, booking_id, check_in, check_out) # type: ignore
             
-        flash("Booking updated successfully.", "success")
-        return redirect(url_for("bookings_list"))
-    return render_template("booking_edit.html", booking=booking)
+        if current_user.is_authenticated:
+            flash("Booking updated successfully.", "success")
+            return redirect(url_for("bookings_list"))
+        else:
+            flash("Booking updated successfully.", "success")
+            return redirect(url_for("booking"))
+            
+    return render_template("booking.html", booking=booking)
 
 @app.route("/booking/delete/<booking_id>", methods=["POST"])
 @login_required
@@ -767,6 +757,15 @@ def feedback(): # sourcery skip: last-if-guard
         rating = int(request.form.get("rating", 0))
         comments = request.form.get("comments", "")
 
+        if existing_feedback := db.feedbacks.find_one({"email": email}):
+            flash(Markup(
+                f'<div style="display:flex; justify-content:space-between; align-items:center;">'
+                f'<span>Your feedback is already submitted.</span>'
+                f'<a href="{url_for("feedback_edit", fb_id=str(existing_feedback["_id"]))}" class="btn btn-sm btn-success">Edit your response</a>'
+                f'</div>'
+            ), "info")
+            return redirect(url_for("feedback"))
+        
         if rating < 0 or rating > 10:
             flash("Rating must be between 0 and 10.", "danger")
             return redirect(url_for("feedback"))
@@ -914,8 +913,69 @@ def toggle_featured_feedback(id):
     )
     return {"success": True}
 
+'''@app.route("/feedback/user/edit/<fb_id>", methods=["GET", "POST"])
+def feedback_edit_user(fb_id):
+    fb = db.feedbacks.find_one({"_id": ObjectId(fb_id)})
+    if not fb:
+        abort(404)
+
+    if request.method == "POST":
+        name = request.form.get("name")
+        rating = int(request.form.get("rating", 0))
+        comments = request.form.get("comments", "")
+
+        photo_ids = fb.get("photos", [])
+        photo_ids = list(set(photo_ids))
+
+        if rating < 0 or rating > 10:
+            flash("Rating must be between 0 and 10.", "danger")
+            return redirect(url_for("feedback_edit_user", fb_id=fb_id))
+
+        # Handle photo uploads (same as admin)
+        if 'photos' in request.files:
+            photos = request.files.getlist('photos')
+            for photo in photos:
+                # Safely obtain filename and skip invalid entries
+                filename_raw = (getattr(photo, "filename", "") or "").strip()
+                if not photo or not filename_raw or not allowed_file(filename_raw):
+                    continue
+                try:
+                    # Extract extension safely
+                    ext = filename_raw.rsplit('.', 1)[1].lower() if '.' in filename_raw else ""
+                    
+                    if ext in ['heic','heif','tiff','tif','cr2','nef','arw','orf','rw2','dng']:
+                        converted = convert_to_jpg(photo, ext)
+                        filename = secure_filename(filename_raw.rsplit('.', 1)[0] + ".jpg")
+                        file_id = fs.put(converted, filename=filename)
+                    else:
+                        filename = secure_filename(filename_raw)
+                        file_id = fs.put(photo, filename=filename)
+                        
+                    photo_ids.append(str(file_id))
+                    
+                except Exception as e:
+                    app.logger.exception(f"Failed to process photo {filename_raw}: {e}")
+                    flash(f"Could not process {filename_raw}. Skipped.", "warning")
+
+        photo_ids = list(set(photo_ids))
+
+        db.feedbacks.update_one(
+            {"_id": ObjectId(fb_id)},
+            {"$set": {
+                "name": name,
+                "rating": rating,
+                "comments": comments,
+                "photos": photo_ids,
+                "updated_at": datetime.now(ZoneInfo("Asia/Kolkata"))
+            }}
+        )
+
+        flash("Your feedback has been updated successfully.", "success")
+        return redirect(url_for("feedback"))
+
+    return render_template("feedback.html", feedback=fb)
+'''
 @app.route("/feedback/edit/<fb_id>", methods=["GET", "POST"])
-@login_required
 def feedback_edit(fb_id):
     fb = db.feedbacks.find_one({"_id": ObjectId(fb_id)}) # type: ignore
     if not fb:
@@ -970,14 +1030,19 @@ def feedback_edit(fb_id):
                 "name": name,
                 "rating": rating,
                 "comments": comments,
-                "photos": photo_ids
+                "photos": photo_ids,
+                "updated_at": datetime.now(ZoneInfo("Asia/Kolkata"))
             }}
         )
 
-        flash("Feedback updated.", "success")
-        return redirect(url_for("feedbacks_list"))
+        if current_user.is_authenticated:
+            flash("Feedback updated.", "success")
+            return redirect(url_for("feedbacks_list"))
+        else:
+            flash("Changes saved.", "success")
+            return redirect(url_for("feedback"))
 
-    return render_template("feedback_edit.html", fb=fb)
+    return render_template("feedback.html", feedback=fb)
 
 @app.route("/feedback/delete/<fb_id>", methods=["POST"])
 @login_required
@@ -992,6 +1057,15 @@ def contact():  # sourcery skip: last-if-guard
         name = request.form.get("name", "").strip()
         email = request.form.get("email", "").strip()
         message = request.form.get("message", "").strip()
+        
+        if existing_contact := db.contacts.find_one({"email": email}):
+            flash(Markup(
+                f'<div style="display:flex; justify-content:space-between; align-items:center;">'
+                f'<span>You have already contacted us.</span>'
+                f'<a href="{url_for("contact_edit", contact_id=str(existing_contact["_id"]))}" class="btn btn-sm btn-success">Edit contact</a>'
+                f'</div>'
+            ), "info")
+            return redirect(url_for("contact"))
 
         # Validation: all fields required
         if not name:
@@ -1087,7 +1161,6 @@ def contact_list():
     return render_template("contact_list.html", contacts=contacts)
 
 @app.route("/contacts/edit/<contact_id>", methods=["GET", "POST"])
-@login_required
 def contact_edit(contact_id):
     contact = db.contacts.find_one({"_id": ObjectId(contact_id)}) #type: ignore
     if request.method == "POST":
@@ -1095,14 +1168,18 @@ def contact_edit(contact_id):
             {"_id": ObjectId(contact_id)},
             {"$set": {
                 "name": request.form["name"],
-                "phone": request.form["phone"],
                 "email": request.form["email"],
                 "message": request.form["message"]
             }}
         )
-        flash("Contact updated successfully!", "success")
-        return redirect(url_for("contact_list"))
-    return render_template("contact_edit.html", contact=contact)
+        if current_user.is_authenticated:
+            flash("Contact updated successfully!", "success")
+            return redirect(url_for("contact_list"))
+        else:
+            flash("Contact updated successfully!", "success")
+            return redirect(url_for("contact"))
+        
+    return render_template("contact.html", contact=contact)
 
 @app.route("/contacts/delete/<contact_id>", methods=["POST"])
 @login_required
@@ -1232,7 +1309,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow, Flow
 SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
 
 flow = InstalledAppFlow.from_client_secrets_file("credentials_desktop.json", SCOPES)
-creds = flow.run_local_server(port=0)  # works with random localhost port
+creds = flow.run_local_server(port=5000)  # works with random localhost port
 
 @app.route("/authorize")
 def authorize():

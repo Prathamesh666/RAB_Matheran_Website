@@ -3,22 +3,22 @@
 <body class="contact-page">
   <h2>Contact Us</h2>
 
-  <form method="post" action="{{ url_for('contact') }}">
+  <form method="post" action="{% if contact %}{{ url_for('contact_edit', contact_id=contact._id) }}{% else %}{{ url_for('contact') }}{% endif %}">
     <div class="mb-3">
       <label class="form-label">Name</label>
-      <input class="form-control" name="name" required>
+      <input class="form-control" name="name" value="{{ contact.name if contact else '' }}" required>
     </div>
     <div class="mb-3">
       <label class="form-label">Email</label>
-      <input class="form-control" name="email" type="email" required>
+      <input class="form-control" name="email" value="{{ contact.email if contact else '' }}" type="email" required>
     </div>
     <div class="mb-3">
       <label class="form-label">Message</label>
-      <textarea class="form-control" name="message" rows="4" required></textarea>
+      <textarea class="form-control" name="message" rows="4" required>{{ contact.message if contact else '' }}</textarea>
     </div>
-    <center><button class="btn btn-primary" type="submit">Submit</button></center>
+    <center><button class="btn btn-success" type="submit">{{ "Update Details" if contact else "Submit Details" }}</button></center>
   </form>
-
+  <hr>
   <!-- Contact Us Dropdown -->
   <div class="btn-group mt-4">
   <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">

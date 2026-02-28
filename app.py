@@ -4,7 +4,6 @@ from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from GmailAPI_Notification import send_notification
 from werkzeug.security import check_password_hash
 from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin, current_user
 import smtplib, os, logging
@@ -812,12 +811,12 @@ def feedback(): # sourcery skip: last-if-guard
             "created_at": datetime.now(ZoneInfo("Asia/Kolkata"))
         })
         
-        #from GmailAPI_Notification import send_notification      
-        #send_notification(
-        #    notification_type="feedback_response",
-        #    name=name,
-        #    to_email=email
-        #)
+        from GmailAPI_Notification import send_notification    
+        send_notification(
+            notification_type="feedback_response",
+            name=name,
+            to_email=email
+        )
         
         # Notify Thanks email for the feedback to guests
         if config.SMTP_HOST and email: # type: ignore
@@ -913,68 +912,6 @@ def toggle_featured_feedback(id):
     )
     return {"success": True}
 
-'''@app.route("/feedback/user/edit/<fb_id>", methods=["GET", "POST"])
-def feedback_edit_user(fb_id):
-    fb = db.feedbacks.find_one({"_id": ObjectId(fb_id)})
-    if not fb:
-        abort(404)
-
-    if request.method == "POST":
-        name = request.form.get("name")
-        rating = int(request.form.get("rating", 0))
-        comments = request.form.get("comments", "")
-
-        photo_ids = fb.get("photos", [])
-        photo_ids = list(set(photo_ids))
-
-        if rating < 0 or rating > 10:
-            flash("Rating must be between 0 and 10.", "danger")
-            return redirect(url_for("feedback_edit_user", fb_id=fb_id))
-
-        # Handle photo uploads (same as admin)
-        if 'photos' in request.files:
-            photos = request.files.getlist('photos')
-            for photo in photos:
-                # Safely obtain filename and skip invalid entries
-                filename_raw = (getattr(photo, "filename", "") or "").strip()
-                if not photo or not filename_raw or not allowed_file(filename_raw):
-                    continue
-                try:
-                    # Extract extension safely
-                    ext = filename_raw.rsplit('.', 1)[1].lower() if '.' in filename_raw else ""
-                    
-                    if ext in ['heic','heif','tiff','tif','cr2','nef','arw','orf','rw2','dng']:
-                        converted = convert_to_jpg(photo, ext)
-                        filename = secure_filename(filename_raw.rsplit('.', 1)[0] + ".jpg")
-                        file_id = fs.put(converted, filename=filename)
-                    else:
-                        filename = secure_filename(filename_raw)
-                        file_id = fs.put(photo, filename=filename)
-                        
-                    photo_ids.append(str(file_id))
-                    
-                except Exception as e:
-                    app.logger.exception(f"Failed to process photo {filename_raw}: {e}")
-                    flash(f"Could not process {filename_raw}. Skipped.", "warning")
-
-        photo_ids = list(set(photo_ids))
-
-        db.feedbacks.update_one(
-            {"_id": ObjectId(fb_id)},
-            {"$set": {
-                "name": name,
-                "rating": rating,
-                "comments": comments,
-                "photos": photo_ids,
-                "updated_at": datetime.now(ZoneInfo("Asia/Kolkata"))
-            }}
-        )
-
-        flash("Your feedback has been updated successfully.", "success")
-        return redirect(url_for("feedback"))
-
-    return render_template("feedback.html", feedback=fb)
-'''
 @app.route("/feedback/edit/<fb_id>", methods=["GET", "POST"])
 def feedback_edit(fb_id):
     fb = db.feedbacks.find_one({"_id": ObjectId(fb_id)}) # type: ignore
@@ -1303,39 +1240,69 @@ def logout():
     flash("Logged out.", "info")
     return redirect(url_for("index"))
 
-from flask import Flask, request, redirect
-from google_auth_oauthlib.flow import InstalledAppFlow, Flow
+from flask import Flask, redirect, request, session, url_for
+from google_auth_oauthlib.flow import Flow
+import os
 
-SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
-
-flow = InstalledAppFlow.from_client_secrets_file("credentials_desktop.json", SCOPES)
-creds = flow.run_local_server(port=5000)  # works with random localhost port
+SCOPES = ['https://mail.google.com/']
 
 @app.route("/authorize")
 def authorize():
+    # Create the flow using your web client credentials
     flow = Flow.from_client_secrets_file(
         "credentials_web.json",
         scopes=SCOPES,
-        redirect_uri="https://ranchoddasarogyabhavanmatheran.onrender.com/oauth2callback"
+        redirect_uri=url_for("oauth2callback", _external=True)
     )
     auth_url, state = flow.authorization_url(
         access_type="offline",
         include_granted_scopes="true"
     )
+    # Save state in session for later validation
+    session["state"] = state
     return redirect(auth_url)
 
 @app.route("/oauth2callback")
 def oauth2callback():
+    # Rebuild the flow with the same redirect URI
     flow = Flow.from_client_secrets_file(
         "credentials_web.json",
         scopes=SCOPES,
-        redirect_uri="https://ranchoddasarogyabhavanmatheran.onrender.com/oauth2callback"
+        redirect_uri=url_for("oauth2callback", _external=True)
     )
     flow.fetch_token(authorization_response=request.url)
+
+    # Verify state
+    if session["state"] != request.args.get("state"):
+        return "State mismatch", 400
+
     creds = flow.credentials
-    with open("token_web.json", "w") as token_file:
-        token_file.write(creds.to_json())
-    return "✅ Authentication successful!"
+    # Store creds securely (DB, encrypted file, etc.)
+    # For demo, just keep in session
+    session["credentials"] = {
+        "token": creds.token,
+        "refresh_token": creds.refresh_token,
+        "token_uri": creds.token_uri,
+        "client_id": creds.client_id,
+        "client_secret": creds.client_secret,
+        "scopes": creds.scopes
+    }
+
+    return redirect("/")
+
+@app.route("/test_gmail")
+def test_gmail():
+    if "credentials" not in session:
+        return redirect(url_for("authorize"))
+
+    from googleapiclient.discovery import build
+    creds_data = session["credentials"]
+    from google.oauth2.credentials import Credentials
+    creds = Credentials(**creds_data)
+
+    service = build("gmail", "v1", credentials=creds)
+    profile = service.users().getProfile(userId="me").execute()
+    return f"Logged in as: {profile['emailAddress']}"
 
 @app.route("/privacy")
 def privacy():

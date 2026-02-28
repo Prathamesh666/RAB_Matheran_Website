@@ -1,5 +1,6 @@
 import os
 import base64
+from Google import Create_Service, convert_to_RFC_datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.image import MIMEImage
@@ -9,31 +10,27 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 import pickle
 
-SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
-
-def get_gmail_service():
-    creds = None
-    # Token stores user access/refresh tokens
-    if os.path.exists("token.pickle"):
-        with open("token.pickle", "rb") as token:
-            creds = pickle.load(token)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file("credentials_web.json", SCOPES)
-            creds = flow.run_local_server(port=0)
-        with open("token.pickle", "wb") as token:
-            pickle.dump(creds, token)
-    return build("gmail", "v1", credentials=creds)
+SCOPES = ['https://mail.google.com/']
 
 def send_via_gmail(notification_type, subject, plain_body, html_body, to_email):
-    service = get_gmail_service()
+    # Configuration
+    CLIENT_SECRET_FILE = 'credentials_web.json'
+    API_NAME = 'gmail'
+    API_VERSION = 'v1'
+    SCOPES = ['https://mail.google.com/']
+    
+    # Create Gmail API service
+    service = Create_Service(CLIENT_SECRET_FILE, API_NAME, API_VERSION, SCOPES)
+    #service = get_gmail_service()
+    
+    results = service.users().settings().sendAs().list(userId="me").execute()
+    for alias in results.get("sendAs", []):
+        print(alias["sendAsEmail"], alias.get("isPrimary"))
 
     # Create MIME message
     message = MIMEMultipart("related")
     message["To"] = to_email
-    message["From"] = os.getenv("SMTP_USER")
+    message["From"] = "p397366@gmail.com"
     message["Subject"] = subject
 
     # Alternative plain + HTML
@@ -60,7 +57,8 @@ def send_via_gmail(notification_type, subject, plain_body, html_body, to_email):
         ).execute()
         print(f"✅ {notification_type} email sent via Gmail API, ID: {sent['id']}")
     except Exception as e:
-        print("❌ Failed via Gmail API:", e)
+        import traceback
+        print("❌ Failed via Gmail API:", traceback.format_exc())
         
 def send_notification(notification_type, booking_id=None, name=None, phone=None, email=None,
                       check_in=None, check_out=None, guests=None, note=None, message=None, to_email=None):
@@ -309,3 +307,9 @@ def send_notification(notification_type, booking_id=None, name=None, phone=None,
 
     # --- Send via Gmail API ---
     send_via_gmail(notification_type, subject, plain_body, html_body, to_email or email or os.getenv("ADMIN_EMAIL"))
+    
+send_notification(
+    notification_type="feedback_response",
+    name="Test User",
+    to_email='prathameshbhurke666@gmail.com'
+)

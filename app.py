@@ -1258,7 +1258,7 @@ def get_redirect_uri():
 
 @app.route("/authorize")
 def authorize():
-    flow = Flow.from_client_secrets_file(
+    flow = Flow.from_client_config(
         os.environ.get("GOOGLE_CREDENTIALS"),
         scopes=SCOPES,
         redirect_uri=get_redirect_uri()

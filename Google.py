@@ -41,7 +41,7 @@ def Create_Service(api_name, api_version, scopes):
             )
             # For local dev: creds = flow.run_local_server(port=5000)
             # On Render, you’ll handle via /oauth2callback route
-            cred = flow.run_local_server(port=0)
+            cred = flow.run_console()
 
         # Save credentials for reuse
         with open(pickle_file, 'wb') as token:

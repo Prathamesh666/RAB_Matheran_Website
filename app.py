@@ -6,7 +6,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from werkzeug.security import check_password_hash
 from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin, current_user
-import smtplib, os, logging
+import smtplib, os, logging, json
 from DCIC import *
 from email.message import EmailMessage
 from werkzeug.utils import secure_filename
@@ -1258,8 +1258,10 @@ def get_redirect_uri():
 
 @app.route("/authorize")
 def authorize():
+    creds_json = os.environ.get("GOOGLE_CREDENTIALS")
+    creds_dict = json.loads(creds_json)  # parse JSON string
     flow = Flow.from_client_config(
-        os.environ.get("GOOGLE_CREDENTIALS"),
+        creds_dict,
         scopes=SCOPES,
         redirect_uri=get_redirect_uri()
     )

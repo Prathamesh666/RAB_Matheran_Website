@@ -307,9 +307,3 @@ def send_notification(notification_type, booking_id=None, name=None, phone=None,
 
     # --- Send via Gmail API ---
     send_via_gmail(notification_type, subject, plain_body, html_body, to_email or email or os.getenv("ADMIN_EMAIL"))
-    
-send_notification(
-    notification_type="feedback_response",
-    name="Test User",
-    to_email='prathameshbhurke666@gmail.com'
-)

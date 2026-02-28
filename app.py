@@ -811,12 +811,15 @@ def feedback(): # sourcery skip: last-if-guard
             "created_at": datetime.now(ZoneInfo("Asia/Kolkata"))
         })
         
-        from GmailAPI_Notification import send_notification    
-        send_notification(
-            notification_type="feedback_response",
-            name=name,
-            to_email=email
-        )
+        try:
+            from GmailAPI_Notification import send_notification    
+            send_notification(
+                notification_type="feedback_response",
+                name=name,
+                to_email=email
+            )
+        except exception as e:
+            app.logger.exception(f"Failed to send feedback response notification: {e}")
         
         # Notify Thanks email for the feedback to guests
         if config.SMTP_HOST and email: # type: ignore

@@ -14,14 +14,12 @@ SCOPES = ['https://mail.google.com/']
 
 def send_via_gmail(notification_type, subject, plain_body, html_body, to_email):
     # Configuration
-    CLIENT_SECRET_FILE = os.environ.get("GOOGLE_CREDENTIALS")
     API_NAME = 'gmail'
     API_VERSION = 'v1'
     SCOPES = ['https://mail.google.com/']
     
     # Create Gmail API service
-    service = Create_Service(CLIENT_SECRET_FILE, API_NAME, API_VERSION, SCOPES)
-    #service = get_gmail_service()
+    service = Create_Service(API_NAME, API_VERSION, SCOPES)
     
     results = service.users().settings().sendAs().list(userId="me").execute()
     for alias in results.get("sendAs", []):

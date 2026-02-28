@@ -14,7 +14,7 @@ SCOPES = ['https://mail.google.com/']
 
 def send_via_gmail(notification_type, subject, plain_body, html_body, to_email):
     # Configuration
-    CLIENT_SECRET_FILE = 'credentials_web.json'
+    CLIENT_SECRET_FILE = os.environ.get("GOOGLE_CREDENTIALS")
     API_NAME = 'gmail'
     API_VERSION = 'v1'
     SCOPES = ['https://mail.google.com/']

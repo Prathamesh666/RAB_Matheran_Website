@@ -818,7 +818,7 @@ def feedback(): # sourcery skip: last-if-guard
                 name=name,
                 to_email=email
             )
-        except exception as e:
+        except Exception as e:
             app.logger.exception(f"Failed to send feedback response notification: {e}")
         
         # Notify Thanks email for the feedback to guests
@@ -1243,45 +1243,46 @@ def logout():
     flash("Logged out.", "info")
     return redirect(url_for("index"))
 
+import os
 from flask import Flask, redirect, request, session, url_for
 from google_auth_oauthlib.flow import Flow
-import os
 
 SCOPES = ['https://mail.google.com/']
 
+def get_redirect_uri():
+    env = os.environ.get("ENVIRONMENT", "local")
+    if env == "render":
+        return "https://ranchoddasarogyabhavanmatheran.onrender.com/oauth2callback"
+    else:
+        return url_for("oauth2callback", _external=True)
+
 @app.route("/authorize")
 def authorize():
-    # Create the flow using your web client credentials
     flow = Flow.from_client_secrets_file(
-        "credentials_web.json",
+        os.environ.get("GOOGLE_CREDENTIALS"),
         scopes=SCOPES,
-        redirect_uri=url_for("oauth2callback", _external=True)
+        redirect_uri=get_redirect_uri()
     )
     auth_url, state = flow.authorization_url(
         access_type="offline",
         include_granted_scopes="true"
     )
-    # Save state in session for later validation
     session["state"] = state
     return redirect(auth_url)
 
 @app.route("/oauth2callback")
 def oauth2callback():
-    # Rebuild the flow with the same redirect URI
     flow = Flow.from_client_secrets_file(
-        "credentials_web.json",
+        os.environ.get("GOOGLE_CREDENTIALS"),
         scopes=SCOPES,
-        redirect_uri=url_for("oauth2callback", _external=True)
+        redirect_uri=get_redirect_uri()
     )
     flow.fetch_token(authorization_response=request.url)
 
-    # Verify state
     if session["state"] != request.args.get("state"):
         return "State mismatch", 400
 
     creds = flow.credentials
-    # Store creds securely (DB, encrypted file, etc.)
-    # For demo, just keep in session
     session["credentials"] = {
         "token": creds.token,
         "refresh_token": creds.refresh_token,
@@ -1290,22 +1291,7 @@ def oauth2callback():
         "client_secret": creds.client_secret,
         "scopes": creds.scopes
     }
-
     return redirect("/")
-
-@app.route("/test_gmail")
-def test_gmail():
-    if "credentials" not in session:
-        return redirect(url_for("authorize"))
-
-    from googleapiclient.discovery import build
-    creds_data = session["credentials"]
-    from google.oauth2.credentials import Credentials
-    creds = Credentials(**creds_data)
-
-    service = build("gmail", "v1", credentials=creds)
-    profile = service.users().getProfile(userId="me").execute()
-    return f"Logged in as: {profile['emailAddress']}"
 
 @app.route("/privacy")
 def privacy():

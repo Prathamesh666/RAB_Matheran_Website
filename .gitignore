@@ -5,6 +5,10 @@ auth.py
 Email_Notification.py
 generate_thumbnails.py
 
+#json files
+credentials_desktop.json
+credentials_web.json
+
 #__pycache__
 config.cpython-313.pyc
 *.pyc

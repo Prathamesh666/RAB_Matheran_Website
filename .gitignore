@@ -22,4 +22,5 @@ env/
 .env
 
 #Readme
-README.md
+README.mdcredentials_web.json
+credentials_desktop.json
